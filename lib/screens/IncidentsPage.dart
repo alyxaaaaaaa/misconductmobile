@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/services/api_service.dart';
 import 'package:misconductmobile/screens/DashboardScreen.dart';
-
+import 'package:intl/intl.dart'; 
 
 class AddIncidentScreen extends StatefulWidget {
   const AddIncidentScreen({super.key});
@@ -22,7 +22,8 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
 
   // State variables for dropdowns
   String? _yearLevel;
-  String? _offenseType;
+  String? _offenseType; 
+  String? _specificOffense; 
 
   DateTime? _incidentDate;
   TimeOfDay? _incidentTime;
@@ -32,30 +33,84 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
   // Colors
   static const primaryColor = Color(0xFF2E7D32);
 
+  // Define offense categories and their specific offenses
+  static const Map<String, List<String>> _offenseList = {
+    "Minor Offense": [
+      "Failure to wear uniform",
+      "Pornographic materials",
+      "Littering",
+      "Loitering",
+      "Eating in restricted areas",
+      "Unauthorized use of school facilities",
+      "Lending/borrowing ID",
+      "Driving violations",
+    ],
+    "Major Offense": [
+      "Alcohol/drugs/weapons",
+      "Smoking",
+      "Disrespect",
+      "Vandalism",
+      "Cheating/forgery",
+      "Barricades/obstructions",
+      "Physical/verbal assault",
+      "Hazing",
+      "Harassment/sexual abuse",
+      "Unauthorized software/gadgets",
+      "Unrecognized fraternity/sorority",
+      "Gambling",
+      "Public indecency",
+      "Offensive/subversive materials",
+      "Grave threats",
+      "Inciting fight/sedition",
+      "Unauthorized activity",
+      "Bullying",
+    ],
+  };
+
   Future<void> _submit() async {
-    if (_incidentDate == null || _incidentTime == null) {
+    // Check if required fields are selected/filled
+    if (_incidentDate == null ||
+        _incidentTime == null ||
+        _offenseType == null ||
+        _specificOffense == null ||
+        _studentId.text.isEmpty ||
+        _fullName.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select date and time.")),
+        const SnackBar(
+            content:
+                Text("Please fill out all required fields (including date, time, and offenses).")),
       );
       return;
     }
 
     setState(() => _loading = true);
 
+    // 1. Combine Date and Time into a single DateTime object
+    final incidentDateTime = DateTime(
+      _incidentDate!.year,
+      _incidentDate!.month,
+      _incidentDate!.day,
+      _incidentTime!.hour,
+      _incidentTime!.minute,
+    );
+
+    // 2. Format the time to 24-hour format (H:i) required by the backend
+    final formattedTime = DateFormat('HH:mm').format(incidentDateTime); 
+
+    // 3. Construct the Incident object
     final incident = Incident(
-      studentIdNumber: _studentId.text,
+      studentId: _studentId.text,
       fullName: _fullName.text,
       program: _program.text,
       yearLevel: _yearLevel ?? "",
       section: _section.text,
       dateOfIncident: _incidentDate!.toIso8601String(),
-      timeOfIncident: _incidentTime!.format(context),
+      timeOfIncident: formattedTime, // 24-hour format
       location: _location.text,
-      offenseType: _offenseType ?? "",
-      description: _description.text, 
-      offenseCategory: '', 
-      reporterId: 0, 
-      status: '',
+      offenseCategory: _offenseType ?? "", // Minor/Major
+      specificOffense: _specificOffense ?? "", // The specific offense
+      description: _description.text,
+      status: 'Pending', // Default status for a new submission
     );
 
     final success = await ApiService.submitIncident(incident);
@@ -66,7 +121,13 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Incident submitted successfully!")),
       );
-      Navigator.pop(context);
+      
+      // 🎯 FIX: Use pushAndRemoveUntil for clean routing back to Dashboard
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        (Route<dynamic> route) => false, // Remove all previous routes
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to submit incident.")),
@@ -78,6 +139,11 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
+    // Get the list of specific offenses for the currently selected offense type
+    final specificOffenses = _offenseType != null
+        ? _offenseList[_offenseType] ?? []
+        : <String>[];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Incident Form"),
@@ -86,14 +152,15 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const DashboardScreen()),
-            );
+             // 🎯 FIX: Use pushAndRemoveUntil for back button as well
+             Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                (Route<dynamic> route) => false, 
+             );
           },
         ),
       ),
-
 
       // Background Gradient
       body: Container(
@@ -152,11 +219,11 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
                   _input("Program", _program, Icons.account_tree),
                   _gap(),
 
-                  // Corrected Year Level Dropdown
+                  // Year Level Dropdown
                   _dropdown(
                     label: "Year Level",
                     value: _yearLevel,
-                    items: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+                    items: const ["1st Year", "2nd Year", "3rd Year", "4th Year"],
                     onChangedCallback: (val) => setState(() => _yearLevel = val),
                   ),
                   _gap(),
@@ -186,7 +253,8 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
                   _pickerButton(
                     label: _incidentTime == null
                         ? "Select Time of Incident"
-                        : "Time: ${_incidentTime!.format(context)}",
+                        // Display 12-hour format for user clarity
+                        : "Time: ${_incidentTime!.format(context)}", 
                     icon: Icons.access_time,
                     onTap: () async {
                       final time = await showTimePicker(
@@ -201,14 +269,32 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
                   _input("Location of Incident", _location, Icons.place),
                   _gap(),
 
-                  // Corrected Offense type dropdown
+                  // Offense Type dropdown (Category)
                   _dropdown(
-                    label: "Offense Type",
+                    label: "Offense Type (Category)",
                     value: _offenseType,
-                    items: ["Minor Offense", "Major Offense"],
-                    onChangedCallback: (val) => setState(() => _offenseType = val),
+                    items: const ["Minor Offense", "Major Offense"],
+                    onChangedCallback: (val) {
+                      setState(() {
+                        _offenseType = val;
+                        // Reset specific offense when the category changes
+                        _specificOffense = null; 
+                      });
+                    },
                   ),
                   _gap(),
+
+                  // Specific Offense dropdown, conditionally displayed
+                  if (_offenseType != null) ...[
+                    _dropdown(
+                      label: "Specific Offense",
+                      value: _specificOffense,
+                      items: specificOffenses,
+                      onChangedCallback: (val) =>
+                          setState(() => _specificOffense = val),
+                    ),
+                    _gap(),
+                  ],
 
                   // Description
                   TextField(
@@ -264,7 +350,7 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
     );
   }
 
-  // Reusable Widgets (same style as register)
+  // Reusable Widgets
   Widget _input(String label, TextEditingController controller, IconData icon) {
     return TextField(
       controller: controller,
@@ -281,7 +367,6 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
     );
   }
 
-  // MODIFIED _dropdown to accept a specific callback
   Widget _dropdown({
     required String label,
     required String? value,
@@ -296,14 +381,15 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
       ),
       child: DropdownButtonFormField<String>(
         value: value,
+        isExpanded: true, 
         decoration: InputDecoration(
           labelText: label,
           border: InputBorder.none,
         ),
         items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis,)))
             .toList(),
-        onChanged: onChangedCallback, // Use the passed callback
+        onChanged: onChangedCallback,
       ),
     );
   }

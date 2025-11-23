@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-// Note: Assuming AddIncidentScreen is accessible from this import path or another local path
 import 'package:misconductmobile/screens/IncidentsPage.dart'; 
-// Corrected import path name to match the ProfileScreen class name
 import 'package:misconductmobile/screens/ProfilePage.dart'; 
 
-// Assuming the class AddIncidentScreen is defined and available (e.g., in a separate file or IncidentsPage.dart)
-// If it's in a separate file named AddIncidentScreen.dart, you might need:
-// import 'AddIncidentScreen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,14 +11,13 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
   int _currentIndex = 0;
   
-  // Define the primary color to ensure theme consistency
   static const primaryColor = Color(0xFF2E7D32);
 
-  // Screens for each tab
   final List<Widget> _screens = [
-    // 0: Home Tab (Placeholder)
+    
     const Center(
       child: Text(
         'Home Screen - Overview of incidents', 
@@ -31,43 +25,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     ),
     
-    // 1: Add Incident Tab - Using the actual screen
-    // Note: The screens below already have their own AppBars, which is why 
-    // the main Dashboard Scaffold does not need one.
-    const AddIncidentScreen(), 
-    
-    // 2: Profile Tab - Using the actual screen
     const ProfileScreen(), 
   ];
 
+  void _navigateToAddIncidentScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddIncidentScreen()),
+    );
+  }
+
   void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (index == 1) { 
+      _navigateToAddIncidentScreen();
+    } else if (index == 0) {
+      setState(() {
+        _currentIndex = 0; 
+      });
+    } else if (index == 2) {
+      setState(() {
+        _currentIndex = 1; 
+      });
+    }
   }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // The body displays the currently selected screen
       body: _screens[_currentIndex],
       
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        // Style properties updated to match the green theme
+        // We initialize currentIndex to 0 (Home)
+        currentIndex: _currentIndex == 0 ? 0 : 2, // Highlight Home or Profile based on _currentIndex (0 or 1)
+        onTap: _onTabTapped, 
+        
         backgroundColor: Colors.white,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey[600],
-        type: BottomNavigationBarType.fixed, // Use fixed type for consistent styling
+        type: BottomNavigationBarType.fixed,
         
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
+          // 🎯 This is the Navigation Action button
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle, size: 40), // Large icon for the main action
+            icon: Icon(Icons.add_circle, size: 40), 
             label: 'Add Incident',
           ),
           BottomNavigationBarItem(
