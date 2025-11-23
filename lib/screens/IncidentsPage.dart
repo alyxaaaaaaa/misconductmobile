@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/services/api_service.dart';
-import 'package:misconductmobile/screens/DashboardScreen.dart';
+// Note: We only need DashboardScreen for the return navigation, no need for redundant pushReplacement
+// import 'package:misconductmobile/screens/DashboardScreen.dart'; 
 import 'package:intl/intl.dart'; 
 
-class AddIncidentScreen extends StatefulWidget {
-  const AddIncidentScreen({super.key});
+// 🎯 CHANGE 1: Renamed class to IncidentsPage to match your file name
+class IncidentsPage extends StatefulWidget {
+  const IncidentsPage({super.key});
 
   @override
-  State<AddIncidentScreen> createState() => _AddIncidentScreenState();
+  State<IncidentsPage> createState() => _IncidentsPageState();
 }
 
-class _AddIncidentScreenState extends State<AddIncidentScreen> {
+// 🎯 CHANGE 2: Renamed state class
+class _IncidentsPageState extends State<IncidentsPage> {
   // Text Controllers
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
@@ -36,34 +39,17 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
   // Define offense categories and their specific offenses
   static const Map<String, List<String>> _offenseList = {
     "Minor Offense": [
-      "Failure to wear uniform",
-      "Pornographic materials",
-      "Littering",
-      "Loitering",
-      "Eating in restricted areas",
-      "Unauthorized use of school facilities",
-      "Lending/borrowing ID",
-      "Driving violations",
+      "Failure to wear uniform", "Pornographic materials", "Littering", 
+      "Loitering", "Eating in restricted areas", "Unauthorized use of school facilities",
+      "Lending/borrowing ID", "Driving violations",
     ],
     "Major Offense": [
-      "Alcohol/drugs/weapons",
-      "Smoking",
-      "Disrespect",
-      "Vandalism",
-      "Cheating/forgery",
-      "Barricades/obstructions",
-      "Physical/verbal assault",
-      "Hazing",
-      "Harassment/sexual abuse",
-      "Unauthorized software/gadgets",
-      "Unrecognized fraternity/sorority",
-      "Gambling",
-      "Public indecency",
-      "Offensive/subversive materials",
-      "Grave threats",
-      "Inciting fight/sedition",
-      "Unauthorized activity",
-      "Bullying",
+      "Alcohol/drugs/weapons", "Smoking", "Disrespect", "Vandalism", 
+      "Cheating/forgery", "Barricades/obstructions", "Physical/verbal assault", 
+      "Hazing", "Harassment/sexual abuse", "Unauthorized software/gadgets", 
+      "Unrecognized fraternity/sorority", "Gambling", "Public indecency", 
+      "Offensive/subversive materials", "Grave threats", "Inciting fight/sedition", 
+      "Unauthorized activity", "Bullying",
     ],
   };
 
@@ -122,12 +108,8 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
         const SnackBar(content: Text("Incident submitted successfully!")),
       );
       
-      // 🎯 FIX: Use pushAndRemoveUntil for clean routing back to Dashboard
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        (Route<dynamic> route) => false, // Remove all previous routes
-      );
+      // 🎯 CHANGE 3: Use Navigator.pop(context, true) to return to Dashboard and signal success
+      Navigator.pop(context, true); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to submit incident.")),
@@ -152,12 +134,8 @@ class _AddIncidentScreenState extends State<AddIncidentScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-             // 🎯 FIX: Use pushAndRemoveUntil for back button as well
-             Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                (Route<dynamic> route) => false, 
-             );
+            // 🎯 CHANGE 4: Use Navigator.pop(context) to return to Dashboard
+            Navigator.pop(context); 
           },
         ),
       ),

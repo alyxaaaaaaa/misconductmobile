@@ -1,8 +1,10 @@
+// File: ProfileScreen.dart
+
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/screens/LoginPage.dart'; 
 import 'package:misconductmobile/models/user.dart';
 import 'package:misconductmobile/services/api_service.dart';
-
+import 'package:misconductmobile/screens/EditProfileScreen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  // Updated to use the actual API service
+  // Called initially and after returning from EditProfileScreen
   Future<void> _loadUserData() async {
     setState(() {
       _isLoading = true;
@@ -31,24 +33,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      // Assuming ApiService has a method to fetch the currently logged-in user
-      // and it returns a User object.
       final user = await ApiService.fetchCurrentUser(); 
       setState(() {
         _user = user;
         _isLoading = false;
       });
     } catch (e) {
-      print("Error fetching user data: $e"); // Log error for debugging
+      print("Error fetching user data: $e");
       setState(() {
-        // Display a more actionable error message
-        _errorMessage = "Authentication failed or profile data not found. Please verify API configuration or try logging in again.";
+        _errorMessage = "Authentication failed or profile data not found.";
         _isLoading = false;
       });
     }
   }
 
-  // New method to handle logout confirmation and action
+  // 🎯 Navigation to Edit Profile screen
+  void _navigateToEditProfile() {
+    if (_user == null) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditProfileScreen(initialUser: _user!), 
+      ),
+    ).then((result) {
+      // Refresh the profile data when returning if the result flag is true
+      if (result == true) {
+        _loadUserData(); 
+      }
+    });
+  }
+
+
   Future<void> _confirmLogout() async {
     final bool? shouldLogout = await showDialog<bool>(
       context: context,
@@ -58,11 +74,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: const Text('Are you sure you want to log out of your account?'),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Stay on page
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel', style: TextStyle(color: primaryColor)),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true), // Proceed with logout
+              onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD32F2F)),
               child: const Text('Logout', style: TextStyle(color: Colors.white)),
             ),
@@ -72,27 +88,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldLogout == true) {
-      // 1. Clear the Auth Token
       ApiService.setAuthToken(null);
       
-      // 2. Show Confirmation Message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Logged out successfully!")),
       );
       
-      // 3. Navigate back to the Login Screen and clear the navigation stack
       Navigator.pushAndRemoveUntil(
         context,
-        // Navigate to the actual LoginScreen class
         MaterialPageRoute(builder: (_) => const LoginScreen()), 
-        (Route<dynamic> route) => false, // Remove all previous routes from stack
+        (Route<dynamic> route) => false,
       );
     }
   }
 
-  // Reusable widget for a data row in the profile card
   Widget _profileInfoRow(IconData icon, String label, String value) {
-    // Check if the value is the default 'N/A' from the User model or empty
     final displayValue = (value == 'N/A' || value.isEmpty) ? 'Data not available' : value;
     final valueColor = (value == 'N/A' || value.isEmpty) ? Colors.red.shade400 : Colors.black87;
 
@@ -120,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: valueColor, // Highlight N/A fields in red
+                    color: valueColor,
                   ),
                 ),
               ],
@@ -134,8 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-
-    // Check if user object is available
     final bool isUserDataValid = _user != null && _user!.fullName != 'N/A';
 
     return Scaffold(
@@ -143,13 +151,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text("User Profile"),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Navigate back to Dashboard or previous screen
-            Navigator.pop(context); 
-          },
-        ),
+        actions: [
+          // 🎯 EDIT BUTTON: Routes to the EditProfileScreen
+          if (isUserDataValid && !_isLoading)
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.white),
+              onPressed: _navigateToEditProfile,
+            ),
+        ],
       ),
       
       body: Container(
@@ -214,18 +223,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(height: 8),
 
-                            // Separator
                             Divider(color: Colors.grey[300]),
                             const SizedBox(height: 16),
                             
-                            // Display data or a message if data is invalid
                             if (_user != null) ...[
-                              // Email Row
-                              _profileInfoRow(
-                                Icons.email, 
-                                "Email Address", 
-                                _user!.email,
-                              ),
+                              _profileInfoRow(Icons.email, "Email Address", _user!.email),
                             ] else ...[
                               const Padding(
                                 padding: EdgeInsets.all(16.0),
@@ -243,11 +245,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: _confirmLogout, // Call the new confirmation method
+                                onPressed: _confirmLogout,
                                 icon: const Icon(Icons.logout, color: Colors.white),
                                 label: const Text("LOGOUT", style: TextStyle(color: Colors.white)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD32F2F), // A red color for action
+                                  backgroundColor: const Color(0xFFD32F2F),
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),

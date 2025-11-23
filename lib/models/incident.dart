@@ -12,12 +12,11 @@ class Incident {
   final String dateOfIncident;
   final String timeOfIncident;
   final String location;
-  final String offenseCategory; // Minor / Major
-  final String specificOffense;     // Specific offense
+  final String offenseCategory;
+  final String specificOffense;
   final String description;
 
   // System Information
-  // final int reporterId; // This field is commented out in your model now.
   final String status;
   final String? createdAt;
 
@@ -34,50 +33,56 @@ class Incident {
     required this.offenseCategory,
     required this.specificOffense,
     required this.description,
-    // required this.reporterId,
     required this.status,
     this.createdAt,
   });
 
   factory Incident.fromJson(Map<String, dynamic> json) {
-    // Keep snake_case for receiving data (or adjust if your API returns camelCase)
+
+    final String studentIdData = 
+        json['student_id'] ??           // 1. Check for Laravel's database column name
+        json['student_id_number'] ??    // 2. Check for your old mapping/API name
+        json['studentId'] ??            // 3. Check for camelCase key
+        '';
+
     return Incident(
       incidentId: json['incident_id'],
-      studentId: json['student_id_number'],
-      fullName: json['full_name'],
-      program: json['program'],
-      yearLevel: json['year_level'],
-      section: json['section'],
-      dateOfIncident: json['date_of_incident'],
-      timeOfIncident: json['time_of_incident'],
-      location: json['location'],
-      offenseCategory: json['offense_category'], 
-      specificOffense: json['specific_offense'], 
-      description: json['description'],
-      // reporterId: json['reporter_id'],
+      
+      // FIX: Use ?? '' fallback for ALL non-nullable String fields
+      studentId: studentIdData.toString(),
+      fullName: json['full_name'] ?? '',
+      program: json['program'] ?? '',
+      yearLevel: json['year_level'] ?? '',
+      section: json['section'] ?? '',
+      
+      dateOfIncident: json['date_of_incident'] ?? '',
+      timeOfIncident: json['time_of_incident'] ?? '',
+      location: json['location'] ?? '',
+      offenseCategory: json['offense_category'] ?? '',
+      specificOffense: json['specific_offense'] ?? '',
+      description: json['description'] ?? '',
+      
+      // Status can default to 'Pending' if null
       status: json['status'] ?? 'Pending',
+      
       createdAt: json['created_at'],
     );
   }
 
-  // CRITICAL CHANGE: Sending camelCase keys to satisfy backend validation
   Map<String, dynamic> toJson() {
     return {
-      'studentId': studentId,           // Changed 'student_id_number' to 'studentId'
-      'fullName': fullName,             // Changed 'full_name' to 'fullName'
+      'studentId': studentId,
+      'fullName': fullName,
       'program': program,
-      'yearLevel': yearLevel,           // Changed 'year_level' to 'yearLevel'
+      'yearLevel': yearLevel,
       'section': section,
-      'dateOfIncident': dateOfIncident, // Changed 'date_of_incident' to 'dateOfIncident'
-      'timeOfIncident': timeOfIncident, // Changed 'time_of_incident' to 'timeOfIncident'
+      'dateOfIncident': dateOfIncident,
+      'timeOfIncident': timeOfIncident,
       'location': location,
       'offenseCategory': offenseCategory,
-      'specificOffense': specificOffense, // Changed 'specific_offense' to 'specificOffense'
+      'specificOffense': specificOffense,
       'description': description,
-      // 'reporterId': reporterId,         // Commented out to match your model changes
       'status': status,
-      // 'incident_id': incidentId,      // Usually not sent on creation
-      // 'created_at': createdAt,        // Usually not sent on creation
     };
   }
 }

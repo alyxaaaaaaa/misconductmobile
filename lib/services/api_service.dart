@@ -1,19 +1,24 @@
 import 'dart:convert';
+import 'dart:io'; // Required for File type
 import 'package:http/http.dart' as http;
-import 'package:misconductmobile/variables.dart';
+import 'package:http_parser/http_parser.dart'; // Required for MediaType
+import 'package:misconductmobile/variables.dart'; // Assumes this file defines 'baseUrl'
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/models/user.dart'; // Import the User model
 
 class ApiService {
 
   // Placeholder for storing the authentication token. 
-  // In a real app, you would use a secure storage solution like flutter_secure_storage.
   static String? _authToken;
 
   // Method to store the token upon successful login
   static void setAuthToken(String? token) {
     _authToken = token;
   }
+  
+  // Method to retrieve the token for internal use
+  static String? getAuthToken() => _authToken;
+
 
   // ============================
   //       LOGIN METHOD
@@ -87,9 +92,7 @@ class ApiService {
       throw Exception("User is not authenticated. Please log in.");
     }
     
-    // Using /me path as the latest attempt
     final uri = Uri.parse("$baseUrl/me"); 
-    print("Attempting to fetch user profile from: $uri"); 
 
     try {
       final response = await http.get(
@@ -103,12 +106,11 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
-        // NEW NESTING CHECK: Try parsing from the root, then check 'user' key, then 'data' key.
         Map<String, dynamic> userData;
         if (responseData.containsKey('user')) {
           userData = responseData['user'] as Map<String, dynamic>;
         } else if (responseData.containsKey('data')) {
-           userData = responseData['data'] as Map<String, dynamic>;
+            userData = responseData['data'] as Map<String, dynamic>;
         } else {
           userData = responseData; // Assume root is the user object
         }
@@ -116,7 +118,7 @@ class ApiService {
         return User.fromJson(userData);
       } else {
         print("Failed to fetch user: ${response.statusCode}, ${response.body}");
-        throw Exception("Failed to fetch user profile: Server returned ${response.statusCode}. Please verify the server route /me exists and returns a valid user object.");
+        throw Exception("Failed to fetch user profile: Server returned ${response.statusCode}.");
       }
     } catch (e) {
       print("Error fetching user data: $e");
@@ -124,12 +126,100 @@ class ApiService {
     }
   }
 
+  // =====================================
+  // 🎯 NEW: UPDATE USER PROFILE (Name, Email, Picture)
+  // =====================================
+  static Future<bool> updateUserProfile(String name, String email, File? profileImage) async {
+    if (_authToken == null) {
+      print("Error: Authentication required for profile update.");
+      return false;
+    }
+    
+    try {
+      // Use multipart request to handle both fields and the file upload
+      final Uri uri = Uri.parse("$baseUrl/user/profile"); // Assuming endpoint is /user/profile
+      var request = http.MultipartRequest('POST', uri);
+      
+      // Set headers
+      request.headers['Authorization'] = 'Bearer $_authToken';
+
+      // Set fields
+      request.fields['name'] = name;
+      request.fields['email'] = email;
+
+      // Add profile picture file if available
+      if (profileImage != null) {
+        // Determine file type for better MIME type accuracy
+        String mimeType = 'image/jpeg';
+        if (profileImage.path.toLowerCase().endsWith('.png')) {
+            mimeType = 'image/png';
+        }
+        
+        request.files.add(
+          http.MultipartFile(
+            'profile_picture', // This key MUST match your Laravel backend's expected file input name
+            profileImage.openRead(),
+            await profileImage.length(),
+            filename: profileImage.path.split('/').last,
+            contentType: MediaType.parse(mimeType),
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      print("Profile Update Response: ${response.statusCode} - ${response.body}");
+
+      if (response.statusCode == 200) {
+        // Optionally parse response body to handle updated user data
+        return true;
+      } else {
+        print('Failed to update profile: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error updating user profile: $e');
+      return false;
+    }
+  }
+
+  // =====================================
+  // 🎯 NEW: CHANGE PASSWORD
+  // =====================================
+  static Future<bool> changePassword(String currentPassword, String newPassword) async {
+    if (_authToken == null) {
+      print("Error: Authentication required for password change.");
+      return false;
+    }
+    
+    try {
+      final http.Response response = await http.post(
+        Uri.parse("$baseUrl/user/change-password"), // Assuming endpoint is /user/change-password
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken',
+        },
+        body: json.encode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': newPassword, // Laravel expects confirmation
+        }),
+      );
+
+      print("Password Change Response: ${response.statusCode} - ${response.body}");
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error changing password: $e');
+      return false;
+    }
+  }
 
   // ============================
-  //     SUBMIT INCIDENT METHOD
+  //     SUBMIT INCIDENT METHOD
   // ============================
   static Future<bool> submitIncident(Incident incident) async {
-    // You might want to add token to this header as well for protection
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/incidents"),
@@ -140,51 +230,60 @@ class ApiService {
         body: jsonEncode(incident.toJson()),
       );
 
-      print("Sent Incident JSON: ${incident.toJson()}");
-      print("Response: ${response.statusCode} - ${response.body}");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-        print("Failed to submit: ${response.statusCode}");
         return false;
       }
     } catch (e) {
-      print("Error submitting incident: $e");
       return false;
     }
   }
 
-  // ============================
-  //     GET ALL INCIDENTS
-  // ============================
-  static Future<List<Incident>> getIncidents() async {
-    // You might want to add token to this header as well for protection
+  // =====================================
+  // 🎯 MODIFIED: FETCH USER INCIDENTS
+  // =====================================
+  static Future<List<Incident>> fetchUserIncidents() async {
+    if (_authToken == null) {
+      throw Exception("Authentication required to view incidents.");
+    }
+    
+    final uri = Uri.parse("$baseUrl/incidents");
+
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/incidents"),
+        uri,
         headers: {
-          if (_authToken != null) "Authorization": "Bearer $_authToken",
+          "Authorization": "Bearer $_authToken", 
         },
       );
 
       if (response.statusCode == 200) {
-        List data = jsonDecode(response.body);
-        return data.map((i) => Incident.fromJson(i)).toList();
-      }
+        final dynamic responseBody = jsonDecode(response.body);
+        List data;
 
-      return [];
+        if (responseBody is Map && responseBody.containsKey('data')) {
+          data = responseBody['data'] as List;
+        } else if (responseBody is List) {
+          data = responseBody;
+        } else {
+           data = [];
+        }
+
+        return data.map((i) => Incident.fromJson(i as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception("Failed to load incidents: Server returned ${response.statusCode}");
+      }
     } catch (e) {
-      print("Error fetching incidents: $e");
-      return [];
+      rethrow; 
     }
   }
 
+
   // ============================
-  //     GET SINGLE INCIDENT
+  //     GET SINGLE INCIDENT
   // ============================
   static Future<Incident?> getIncident(int id) async {
-    // You might want to add token to this header as well for protection
     try {
       final response = await http.get(
         Uri.parse("$baseUrl/incidents/$id"),
@@ -199,16 +298,14 @@ class ApiService {
 
       return null;
     } catch (e) {
-      print("Error getting incident: $e");
       return null;
     }
   }
 
   // ============================
-  //     UPDATE INCIDENT (optional)
+  //     UPDATE INCIDENT (optional)
   // ============================
   static Future<bool> updateIncident(int id, Map<String, dynamic> data) async {
-    // You must add token to this header for protection
     try {
       final response = await http.put(
         Uri.parse("$baseUrl/incidents/$id"),
@@ -221,16 +318,14 @@ class ApiService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print("Update error: $e");
       return false;
     }
   }
 
   // ============================
-  //     DELETE INCIDENT
+  //     DELETE INCIDENT
   // ============================
   static Future<bool> deleteIncident(int id) async {
-    // You must add token to this header for protection
     try {
       final response = await http.delete(
         Uri.parse("$baseUrl/incidents/$id"),
@@ -241,7 +336,6 @@ class ApiService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print("Delete error: $e");
       return false;
     }
   }
