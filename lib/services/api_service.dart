@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io'; // Required for File type
+import 'dart:io'; 
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart'; // Required for MediaType
-import 'package:misconductmobile/variables.dart'; // Assumes this file defines 'baseUrl'
+import 'package:http_parser/http_parser.dart'; 
+import 'package:misconductmobile/variables.dart'; 
 import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/models/user.dart'; // Import the User model
+import 'package:misconductmobile/models/user.dart'; 
 
 class ApiService {
 
@@ -19,10 +19,7 @@ class ApiService {
   // Method to retrieve the token for internal use
   static String? getAuthToken() => _authToken;
 
-
-  // ============================
   //       LOGIN METHOD
-  // ============================
   static Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -49,9 +46,7 @@ class ApiService {
     }
   }
 
-  // ============================
   //       REGISTER METHOD
-  // ============================
   static Future<Map<String, dynamic>?> register(
       String fullName, String email, String password) async {
     try {
@@ -84,9 +79,7 @@ class ApiService {
     }
   }
   
-  // ============================
   //     FETCH CURRENT USER
-  // ============================
   static Future<User> fetchCurrentUser() async {
     if (_authToken == null) {
       throw Exception("User is not authenticated. Please log in.");
@@ -126,9 +119,7 @@ class ApiService {
     }
   }
 
-  // =====================================
-  // 🎯 NEW: UPDATE USER PROFILE (Name, Email, Picture)
-  // =====================================
+  // NEW: UPDATE USER PROFILE (Name, Email, Picture)
   static Future<bool> updateUserProfile(String name, String email, File? profileImage) async {
     if (_authToken == null) {
       print("Error: Authentication required for profile update.");
@@ -184,9 +175,7 @@ class ApiService {
     }
   }
 
-  // =====================================
-  // 🎯 NEW: CHANGE PASSWORD
-  // =====================================
+  // NEW: CHANGE PASSWORD
   static Future<bool> changePassword(String currentPassword, String newPassword) async {
     if (_authToken == null) {
       print("Error: Authentication required for password change.");
@@ -216,9 +205,7 @@ class ApiService {
     }
   }
 
-  // ============================
-  //     SUBMIT INCIDENT METHOD
-  // ============================
+  // NEW: SUBMIT INCIDENT METHOD
   static Future<bool> submitIncident(Incident incident) async {
     try {
       final response = await http.post(
@@ -240,9 +227,7 @@ class ApiService {
     }
   }
 
-  // =====================================
-  // 🎯 MODIFIED: FETCH USER INCIDENTS
-  // =====================================
+  // NEW: FETCH USER INCIDENTS
   static Future<List<Incident>> fetchUserIncidents() async {
     if (_authToken == null) {
       throw Exception("Authentication required to view incidents.");
@@ -280,9 +265,7 @@ class ApiService {
   }
 
 
-  // ============================
-  //     GET SINGLE INCIDENT
-  // ============================
+  // NEW: GET SINGLE INCIDENT
   static Future<Incident?> getIncident(int id) async {
     try {
       final response = await http.get(
@@ -302,9 +285,7 @@ class ApiService {
     }
   }
 
-  // ============================
-  //     UPDATE INCIDENT (optional)
-  // ============================
+  // NEW: UPDATE INCIDENT (optional)
   static Future<bool> updateIncident(int id, Map<String, dynamic> data) async {
     try {
       final response = await http.put(
@@ -322,9 +303,7 @@ class ApiService {
     }
   }
 
-  // ============================
-  //     DELETE INCIDENT
-  // ============================
+  // NEW: DELETE INCIDENT
   static Future<bool> deleteIncident(int id) async {
     try {
       final response = await http.delete(

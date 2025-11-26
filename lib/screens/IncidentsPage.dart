@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/services/api_service.dart';
-// Note: We only need DashboardScreen for the return navigation, no need for redundant pushReplacement
-// import 'package:misconductmobile/screens/DashboardScreen.dart'; 
 import 'package:intl/intl.dart'; 
 
-// 🎯 CHANGE 1: Renamed class to IncidentsPage to match your file name
 class IncidentsPage extends StatefulWidget {
   const IncidentsPage({super.key});
 
@@ -13,7 +10,6 @@ class IncidentsPage extends StatefulWidget {
   State<IncidentsPage> createState() => _IncidentsPageState();
 }
 
-// 🎯 CHANGE 2: Renamed state class
 class _IncidentsPageState extends State<IncidentsPage> {
   // Text Controllers
   final _studentId = TextEditingController();
@@ -35,6 +31,9 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
   // Colors
   static const primaryColor = Color(0xFF2E7D32);
+
+  // Date formatter for displaying selected date in the button
+  final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy'); 
 
   // Define offense categories and their specific offenses
   static const Map<String, List<String>> _offenseList = {
@@ -108,7 +107,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
         const SnackBar(content: Text("Incident submitted successfully!")),
       );
       
-      // 🎯 CHANGE 3: Use Navigator.pop(context, true) to return to Dashboard and signal success
       Navigator.pop(context, true); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -134,171 +132,155 @@ class _IncidentsPageState extends State<IncidentsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // 🎯 CHANGE 4: Use Navigator.pop(context) to return to Dashboard
             Navigator.pop(context); 
           },
         ),
       ),
 
-      // Background Gradient
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF4CAF50), primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
 
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+          child: Container(
+            width: width * 0.92,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: BoxDecoration(
+              color: Colors.white, 
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
 
-            child: Container(
-              width: width * 0.92,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                const Center(
+                  child: Text(
+                    "Incident Report",
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
                   ),
+                ),
+
+                const SizedBox(height: 24),
+
+                _input("Student ID Number", _studentId, Icons.badge),
+                _gap(),
+
+                _input("Full Name", _fullName, Icons.person),
+                _gap(),
+
+                _input("Program", _program, Icons.account_tree),
+                _gap(),
+
+                // Year Level Dropdown
+                _dropdown(
+                  label: "Year Level",
+                  value: _yearLevel,
+                  items: const ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+                  onChangedCallback: (val) => setState(() => _yearLevel = val),
+                ),
+                _gap(),
+
+                _input("Section", _section, Icons.group),
+                _gap(),
+
+                // Date Picker 
+                _pickerButton(
+                  label: "Select Date of Incident",
+                  icon: Icons.date_range,
+                  selectedDate: _incidentDate, // Pass state variable
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                      initialDate: DateTime.now(),
+                    );
+                    if (date != null) setState(() => _incidentDate = date);
+                  },
+                ),
+                _gap(),
+
+                // Time Picker
+                _pickerButton(
+                  label: "Select Time of Incident",
+                  icon: Icons.access_time,
+                  selectedTime: _incidentTime, // Pass state variable
+                  onTap: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (time != null) setState(() => _incidentTime = time);
+                  },
+                ),
+                _gap(),
+
+                _input("Location of Incident", _location, Icons.place),
+                _gap(),
+
+                // Offense Type dropdown (Category)
+                _dropdown(
+                  label: "Offense Type (Category)",
+                  value: _offenseType,
+                  items: const ["Minor Offense", "Major Offense"],
+                  onChangedCallback: (val) {
+                    setState(() {
+                      _offenseType = val;
+                      // Reset specific offense when the category changes
+                      _specificOffense = null; 
+                    });
+                  },
+                ),
+                _gap(),
+
+                // Specific Offense dropdown, conditionally displayed
+                if (_offenseType != null) ...[
+                  _dropdown(
+                    label: "Specific Offense",
+                    value: _specificOffense,
+                    items: specificOffenses,
+                    onChangedCallback: (val) =>
+                        setState(() => _specificOffense = val),
+                  ),
+                  _gap(),
                 ],
-              ),
 
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  const Center(
-                    child: Text(
-                      "Incident Report",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
+                // Description
+                TextField(
+                  controller: _description,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: "Description",
+                    filled: true,
+                    fillColor: Colors.green[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 30),
 
-                  _input("Student ID Number", _studentId, Icons.badge),
-                  _gap(),
-
-                  _input("Full Name", _fullName, Icons.person),
-                  _gap(),
-
-                  _input("Program", _program, Icons.account_tree),
-                  _gap(),
-
-                  // Year Level Dropdown
-                  _dropdown(
-                    label: "Year Level",
-                    value: _yearLevel,
-                    items: const ["1st Year", "2nd Year", "3rd Year", "4th Year"],
-                    onChangedCallback: (val) => setState(() => _yearLevel = val),
-                  ),
-                  _gap(),
-
-                  _input("Section", _section, Icons.group),
-                  _gap(),
-
-                  // Date Picker
-                  _pickerButton(
-                    label: _incidentDate == null
-                        ? "Select Date of Incident"
-                        : "Date: ${_incidentDate!.toLocal()}".split(' ')[0],
-                    icon: Icons.date_range,
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                        initialDate: DateTime.now(),
-                      );
-                      if (date != null) setState(() => _incidentDate = date);
-                    },
-                  ),
-                  _gap(),
-
-                  // Time Picker
-                  _pickerButton(
-                    label: _incidentTime == null
-                        ? "Select Time of Incident"
-                        // Display 12-hour format for user clarity
-                        : "Time: ${_incidentTime!.format(context)}", 
-                    icon: Icons.access_time,
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (time != null) setState(() => _incidentTime = time);
-                    },
-                  ),
-                  _gap(),
-
-                  _input("Location of Incident", _location, Icons.place),
-                  _gap(),
-
-                  // Offense Type dropdown (Category)
-                  _dropdown(
-                    label: "Offense Type (Category)",
-                    value: _offenseType,
-                    items: const ["Minor Offense", "Major Offense"],
-                    onChangedCallback: (val) {
-                      setState(() {
-                        _offenseType = val;
-                        // Reset specific offense when the category changes
-                        _specificOffense = null; 
-                      });
-                    },
-                  ),
-                  _gap(),
-
-                  // Specific Offense dropdown, conditionally displayed
-                  if (_offenseType != null) ...[
-                    _dropdown(
-                      label: "Specific Offense",
-                      value: _specificOffense,
-                      items: specificOffenses,
-                      onChangedCallback: (val) =>
-                          setState(() => _specificOffense = val),
-                    ),
-                    _gap(),
-                  ],
-
-                  // Description
-                  TextField(
-                    controller: _description,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      labelText: "Description",
-                      filled: true,
-                      fillColor: Colors.green[50],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  _loading
-                      ? const Center(
+                _loading
+                    ? const Center(
                           child: CircularProgressIndicator(
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(primaryColor),
                           ),
                         )
-                      : SizedBox(
+                    : SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _submit,
@@ -319,8 +301,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
                             ),
                           ),
                         ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
@@ -329,6 +310,8 @@ class _IncidentsPageState extends State<IncidentsPage> {
   }
 
   // Reusable Widgets
+  // ------------------------------------------------------------------
+
   Widget _input(String label, TextEditingController controller, IconData icon) {
     return TextField(
       controller: controller,
@@ -372,11 +355,29 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
   }
 
+  // MODIFIED _pickerButton with robust null checks for TimeOfDay.format
   Widget _pickerButton({
     required String label,
     required IconData icon,
     required VoidCallback onTap,
+    DateTime? selectedDate,
+    TimeOfDay? selectedTime,
   }) {
+    String displayLabel = label;
+
+    // Logic for displaying the selected DATE
+    if (icon == Icons.date_range && selectedDate != null) {
+      displayLabel = 'Date: ${_dateFormatter.format(selectedDate)}';
+    
+    // Logic for displaying the selected TIME (Error Fix: The null check ensures .format() is only called if selectedTime is non-null)
+    } else if (icon == Icons.access_time) {
+      if (selectedTime != null) {
+         displayLabel = 'Time: ${selectedTime.format(context)}';
+      } else {
+        displayLabel = label; // Fallback to "Select Time of Incident"
+      }
+    }
+
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
@@ -392,7 +393,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
           Icon(icon, color: primaryColor),
           const SizedBox(width: 12),
           Text(
-            label,
+            displayLabel,
             style: const TextStyle(color: primaryColor),
           ),
         ],

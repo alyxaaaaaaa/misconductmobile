@@ -1,5 +1,3 @@
-// File: ProfileScreen.dart
-
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/screens/LoginPage.dart'; 
 import 'package:misconductmobile/models/user.dart';
@@ -47,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // 🎯 Navigation to Edit Profile screen
+  //  Navigation to Edit Profile screen (Logic remains the same)
   void _navigateToEditProfile() {
     if (_user == null) return;
     
@@ -144,123 +142,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final bool isUserDataValid = _user != null && _user!.fullName != 'N/A';
+    final bool isUserDataValid = _user != null && (_user!.fullName ?? 'N/A') != 'N/A';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("User Profile"),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        actions: [
-          // 🎯 EDIT BUTTON: Routes to the EditProfileScreen
-          if (isUserDataValid && !_isLoading)
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.white),
-              onPressed: _navigateToEditProfile,
-            ),
-        ],
+        // REMOVED EDIT BUTTON from AppBar actions
+        actions: [], 
       ),
       
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF4CAF50), primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Container(
-              width: width * 0.92,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 15,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                      ),
-                    )
-                  : _errorMessage != null
-                      ? Center(child: Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red, fontSize: 16)))
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Profile Avatar
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundColor: primaryColor.withOpacity(0.1),
-                              child: Icon(
-                                isUserDataValid ? Icons.person_rounded : Icons.error_outline,
-                                size: 60,
-                                color: isUserDataValid ? primaryColor : Colors.red,
-                              ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Container(
+            width: width * 0.92,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 15,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                    ),
+                  )
+                : _errorMessage != null
+                    ? Center(child: Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red, fontSize: 16)))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Profile Avatar
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              isUserDataValid ? Icons.person_rounded : Icons.error_outline,
+                              size: 60,
+                              color: isUserDataValid ? primaryColor : Colors.red,
                             ),
-                            const SizedBox(height: 16),
-                            
-                            // User Full Name (Headline)
-                            Text(
-                              _user?.fullName ?? 'Profile Missing',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // User Full Name (Headline)
+                          Text(
+                            _user?.fullName ?? 'Profile Missing',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
                             ),
-                            const SizedBox(height: 8),
+                          ),
+                          const SizedBox(height: 8),
 
-                            Divider(color: Colors.grey[300]),
-                            const SizedBox(height: 16),
-                            
-                            if (_user != null) ...[
-                              _profileInfoRow(Icons.email, "Email Address", _user!.email),
-                            ] else ...[
-                              const Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text(
-                                  "User data is currently unavailable. Please contact support or try logging out and back in.",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.red, fontStyle: FontStyle.italic),
-                                ),
-                              )
-                            ],
-                            
-                            const SizedBox(height: 24),
-                            
-                            // Logout Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _confirmLogout,
-                                icon: const Icon(Icons.logout, color: Colors.white),
-                                label: const Text("LOGOUT", style: TextStyle(color: Colors.white)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFD32F2F),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 5,
-                                ),
+                          Divider(color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          
+                          if (_user != null) ...[
+                            _profileInfoRow(Icons.email, "Email Address", _user!.email),
+                          ] else ...[
+                            const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                "User data is currently unavailable. Please contact support or try logging out and back in.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.red, fontStyle: FontStyle.italic),
                               ),
                             )
                           ],
-                        ),
-            ),
+                          
+                          const SizedBox(height: 24),
+
+                          // NEW: Edit Profile Button
+                          if (isUserDataValid && !_isLoading)
+                            Column(
+                              children: [
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _navigateToEditProfile,
+                                    icon: const Icon(Icons.edit, color: Colors.white),
+                                    label: const Text("EDIT PROFILE", style: TextStyle(color: Colors.white)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor, // Use primary color for edit
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 5,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16), // Gap between Edit and Logout
+                              ],
+                            ),
+                          
+                          // Logout Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _confirmLogout,
+                              icon: const Icon(Icons.logout, color: Colors.white),
+                              label: const Text("LOGOUT", style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD32F2F),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 5,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
           ),
         ),
       ),

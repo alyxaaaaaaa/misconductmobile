@@ -1,5 +1,3 @@
-// File: EditProfileScreen.dart
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; 
@@ -120,7 +118,7 @@ void _showChangePasswordDialog() {
                     controller: _currentPasswordController,
                     decoration: InputDecoration(
                       labelText: 'Current Password',
-                      // 🎯 Add the toggle icon
+                      // Add the toggle icon
                       suffixIcon: IconButton(
                         icon: Icon(
                           currentPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -141,7 +139,7 @@ void _showChangePasswordDialog() {
                     controller: _newPasswordController,
                     decoration: InputDecoration(
                       labelText: 'New Password',
-                      // 🎯 Add the toggle icon
+                      // Add the toggle icon
                       suffixIcon: IconButton(
                         icon: Icon(
                           newPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -162,7 +160,7 @@ void _showChangePasswordDialog() {
                     controller: _confirmNewPasswordController,
                     decoration: InputDecoration(
                       labelText: 'Confirm New Password',
-                      // 🎯 Add the toggle icon
+                      // Add the toggle icon
                       suffixIcon: IconButton(
                         icon: Icon(
                           confirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -243,16 +241,8 @@ void _showChangePasswordDialog() {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF4CAF50), primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+      // 
+      body: SingleChildScrollView(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -300,14 +290,14 @@ void _showChangePasswordDialog() {
                     const SizedBox(height: 16),
 
                     // Email Field
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(fontSize: 18),
-                      validator: (value) => !value!.contains('@') ? 'Enter a valid email' : null,
-                    ),
-                    const SizedBox(height: 30),
+                    // TextFormField(
+                    //   controller: _emailController,
+                    //   decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                    //   keyboardType: TextInputType.emailAddress,
+                    //   style: const TextStyle(fontSize: 18),
+                    //   validator: (value) => !value!.contains('@') ? 'Enter a valid email' : null,
+                    // ),
+                    // const SizedBox(height: 30),
 
                     // Change Password Button
                     SizedBox(
