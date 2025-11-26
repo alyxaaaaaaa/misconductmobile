@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/screens/ProfilePage.dart'; 
-import 'package:misconductmobile/screens/IncidentsPage.dart'; // The ADD form
+import 'package:misconductmobile/screens/AddIncidentPage.dart'; // The ADD form
 import 'package:misconductmobile/screens/IncidentsLists.dart'; // The HOME list view
 
 class DashboardScreen extends StatefulWidget {

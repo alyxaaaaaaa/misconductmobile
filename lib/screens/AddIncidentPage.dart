@@ -11,10 +11,9 @@ class IncidentsPage extends StatefulWidget {
 }
 
 class _IncidentsPageState extends State<IncidentsPage> {
-  // Text Controllers
+  // Text Controllers (Removed _program controller)
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
-  final _program = TextEditingController();
   final _section = TextEditingController();
   final _location = TextEditingController();
   final _description = TextEditingController();
@@ -23,6 +22,8 @@ class _IncidentsPageState extends State<IncidentsPage> {
   String? _yearLevel;
   String? _offenseType; 
   String? _specificOffense; 
+  // State variable for Program
+  String? _program; 
 
   DateTime? _incidentDate;
   TimeOfDay? _incidentTime;
@@ -34,6 +35,15 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
   // Date formatter for displaying selected date in the button
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy'); 
+
+  // List of available programs
+  static const List<String> _programList = [
+    'BSIT',
+    'BSCS', 
+    'BSDSA', 
+    'BLIS',
+    'BSIS',
+  ];
 
   // Define offense categories and their specific offenses
   static const Map<String, List<String>> _offenseList = {
@@ -52,18 +62,36 @@ class _IncidentsPageState extends State<IncidentsPage> {
     ],
   };
 
+  // Helper to format validation errors from the backend.
+  String _formatBackendErrors(Map<String, dynamic> errors) {
+    String errorMessage = 'Please correct the following issues:\n';
+    
+    errors.forEach((key, value) {
+      if (value is List && value.isNotEmpty) {
+        // We look for 'studentId' or any other field key here
+        errorMessage += '• ${value.first}\n';
+      }
+    });
+    return errorMessage.trim();
+  }
+
   Future<void> _submit() async {
-    // Check if required fields are selected/filled
+    // Check if required fields are selected/filled (client-side pre-validation)
     if (_incidentDate == null ||
         _incidentTime == null ||
         _offenseType == null ||
         _specificOffense == null ||
         _studentId.text.isEmpty ||
-        _fullName.text.isEmpty) {
+        _fullName.text.isEmpty ||
+        // Check for required dropdowns
+        _program == null || 
+        _yearLevel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content:
-                Text("Please fill out all required fields (including date, time, and offenses).")),
+                Text("Please fill out all required fields (date, time, offenses, student info)."),
+            backgroundColor: Colors.orange, // Highlight missing client-side fields
+          ),
       );
       return;
     }
@@ -86,10 +114,12 @@ class _IncidentsPageState extends State<IncidentsPage> {
     final incident = Incident(
       studentId: _studentId.text,
       fullName: _fullName.text,
-      program: _program.text,
+      // Use the state variable for program
+      program: _program ?? "", 
       yearLevel: _yearLevel ?? "",
       section: _section.text,
-      dateOfIncident: _incidentDate!.toIso8601String(),
+      // FIX: Ensure only the date part is sent for backend validation
+      dateOfIncident: _incidentDate!.toIso8601String().split('T').first, 
       timeOfIncident: formattedTime, // 24-hour format
       location: _location.text,
       offenseCategory: _offenseType ?? "", // Minor/Major
@@ -98,20 +128,39 @@ class _IncidentsPageState extends State<IncidentsPage> {
       status: 'Pending', // Default status for a new submission
     );
 
-    final success = await ApiService.submitIncident(incident);
+    // IMPORTANT: ApiService.submitIncident must return the parsed JSON map 
+    // { 'message', 'errors' } if a 422 error occurs.
+    final response = await ApiService.submitIncident(incident);
 
     setState(() => _loading = false);
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Incident submitted successfully!")),
-      );
-      
-      Navigator.pop(context, true); 
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to submit incident.")),
-      );
+    if (mounted) {
+      if (response is Map<String, dynamic> && response.containsKey('errors')) {
+        // --- BACKEND VALIDATION ERROR (HTTP 422) ---
+        // This is where the student ID error message is processed
+        final errorMessages = _formatBackendErrors(response['errors']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessages),
+            backgroundColor: Colors.red.shade700, 
+            duration: const Duration(seconds: 7), 
+          ),
+        );
+      } else if (response is bool && response) {
+        // --- SUCCESS ---
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Incident submitted successfully!")),
+        );
+        Navigator.pop(context, true); 
+      } else {
+        // --- GENERAL FAILURE (Network, 500 server error, etc.) ---
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Failed to submit incident due to a server or connection error."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -179,7 +228,13 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _input("Full Name", _fullName, Icons.person),
                 _gap(),
 
-                _input("Program", _program, Icons.account_tree),
+                // Program Dropdown
+                _dropdown(
+                  label: "Program",
+                  value: _program,
+                  items: _programList,
+                  onChangedCallback: (val) => setState(() => _program = val),
+                ),
                 _gap(),
 
                 // Year Level Dropdown
@@ -369,10 +424,10 @@ class _IncidentsPageState extends State<IncidentsPage> {
     if (icon == Icons.date_range && selectedDate != null) {
       displayLabel = 'Date: ${_dateFormatter.format(selectedDate)}';
     
-    // Logic for displaying the selected TIME (Error Fix: The null check ensures .format() is only called if selectedTime is non-null)
+    // Logic for displaying the selected TIME (The null check ensures .format() is only called if selectedTime is non-null)
     } else if (icon == Icons.access_time) {
       if (selectedTime != null) {
-         displayLabel = 'Time: ${selectedTime.format(context)}';
+          displayLabel = 'Time: ${selectedTime.format(context)}';
       } else {
         displayLabel = label; // Fallback to "Select Time of Incident"
       }

@@ -1,14 +1,12 @@
 class Incident {
   final int? incidentId;
 
-  // Student Information
   final String studentId;
   final String fullName;
   final String program;
   final String yearLevel;
   final String section;
 
-  // Incident Information
   final String dateOfIncident;
   final String timeOfIncident;
   final String location;
@@ -16,7 +14,6 @@ class Incident {
   final String specificOffense;
   final String description;
 
-  // System Information
   final String status;
   final String? createdAt;
 
@@ -40,15 +37,14 @@ class Incident {
   factory Incident.fromJson(Map<String, dynamic> json) {
 
     final String studentIdData = 
-        json['student_id'] ??           // 1. Check for Laravel's database column name
-        json['student_id_number'] ??    // 2. Check for your old mapping/API name
-        json['studentId'] ??            // 3. Check for camelCase key
+        json['student_id'] ??           
+        json['student_id_number'] ??    
+        json['studentId'] ??            
         '';
 
     return Incident(
       incidentId: json['incident_id'],
       
-      // FIX: Use ?? '' fallback for ALL non-nullable String fields
       studentId: studentIdData.toString(),
       fullName: json['full_name'] ?? '',
       program: json['program'] ?? '',
@@ -62,7 +58,6 @@ class Incident {
       specificOffense: json['specific_offense'] ?? '',
       description: json['description'] ?? '',
       
-      // Status can default to 'Pending' if null
       status: json['status'] ?? 'Pending',
       
       createdAt: json['created_at'],

@@ -10,9 +10,8 @@ class UserProvider extends ChangeNotifier {
   String? get email => _email;
 
   void setUser(Map<String, dynamic> user) {
-    // ⚠️ UPDATE: Use 'fullName' key instead of 'name'
     _id = user['id'];
-    _name = user['fullName']; // Key updated to match the registration field
+    _name = user['fullName']; 
     _email = user['email'];
     notifyListeners();
   }
