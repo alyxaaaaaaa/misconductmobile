@@ -1,12 +1,12 @@
-// lib/services/api_service.dart (CLEANED UP)
+// lib/services/api_service.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:misconductmobile/variables.dart'; // Contains baseUrl
+import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/models/user.dart';
-
-// Note: Removed unused 'dart:io', 'incident.dart' imports
 
 class ApiService {
   static String? _authToken;
@@ -17,12 +17,9 @@ class ApiService {
 
   static String? getAuthToken() => _authToken;
 
-  // ------------------ AUTHENTICATION ------------------
-  
-  //          LOGIN METHOD
+  //          LOGIN METHOD
   static Future<Map<String, dynamic>?> login(
       String email, String password) async {
-    // ... (Login method unchanged) ...
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/login"),
@@ -43,10 +40,9 @@ class ApiService {
     }
   }
 
-  //          REGISTER METHOD
+  //          REGISTER METHOD
   static Future<Map<String, dynamic>?> register(
       String fullName, String email, String password) async {
-    // ... (Register method unchanged) ...
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/register"),
@@ -72,11 +68,8 @@ class ApiService {
     }
   }
 
-  // ------------------ USER PROFILE ------------------
-  
-  //      FETCH CURRENT USER
+  //      FETCH CURRENT USER
   static Future<User> fetchCurrentUser() async {
-    // ... (fetchCurrentUser method unchanged) ...
     if (_authToken == null) {
       throw Exception("User is not authenticated. Please log in.");
     }
@@ -111,10 +104,9 @@ class ApiService {
     }
   }
 
-  // UPDATE USER PROFILE
+  // ✅ UPDATED: UPDATE USER PROFILE (Returns User object for state update)
   static Future<User?> updateUserProfile(
       String name, String email, XFile? profileImageXFile) async {
-    // ... (updateUserProfile method unchanged) ...
     if (_authToken == null) {
       print("Error: Authentication required for profile update.");
       return null;
@@ -126,6 +118,7 @@ class ApiService {
 
       request.headers['Authorization'] = 'Bearer $_authToken';
       
+      // Sending 'name' to match Laravel validation requirements
       request.fields['name'] = name; 
       request.fields['email'] = email;
 
@@ -151,6 +144,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         
+        // 🎯 Return the fully updated User object from the API response
         return User.fromJson(responseData['user']);
       } 
       else if (response.statusCode == 422) {
@@ -166,10 +160,9 @@ class ApiService {
     }
   }
 
-  // CHANGE PASSWORD
+  // NEW: CHANGE PASSWORD
   static Future<bool> changePassword(
       String currentPassword, String newPassword) async {
-    // ... (changePassword method unchanged) ...
     if (_authToken == null) {
       print("Error: Authentication required for password change.");
       return false;
@@ -192,6 +185,119 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       print('Error changing password: $e');
+      return false;
+    }
+  }
+
+  // 🚨 MODIFIED: SUBMIT INCIDENT METHOD
+  static Future<dynamic> submitIncident(Incident incident) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/incidents"),
+        headers: {
+          "Content-Type": "application/json",
+          if (_authToken != null) "Authorization": "Bearer $_authToken",
+        },
+        body: jsonEncode(incident.toJson()),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else if (response.statusCode == 422) {
+        try {
+          return jsonDecode(response.body);
+        } catch (_) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print("Error submitting incident: $e");
+      return false;
+    }
+  }
+
+  // NEW: FETCH USER INCIDENTS
+  static Future<List<Incident>> fetchUserIncidents() async {
+    if (_authToken == null) {
+      throw Exception("Authentication required to view incidents.");
+    }
+    final uri = Uri.parse("$baseUrl/incidents");
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          "Authorization": "Bearer $_authToken",
+        },
+      );
+      if (response.statusCode == 200) {
+        final dynamic responseBody = jsonDecode(response.body);
+        List data;
+        if (responseBody is Map && responseBody.containsKey('data')) {
+          data = responseBody['data'] as List;
+        } else if (responseBody is List) {
+          data = responseBody;
+        } else {
+          data = [];
+        }
+        return data
+            .map((i) => Incident.fromJson(i as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(
+            "Failed to load incidents: Server returned ${response.statusCode}");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // NEW: GET SINGLE INCIDENT
+  static Future<Incident?> getIncident(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/incidents/$id"),
+        headers: {
+          if (_authToken != null) "Authorization": "Bearer $_authToken",
+        },
+      );
+      if (response.statusCode == 200) {
+        return Incident.fromJson(jsonDecode(response.body));
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // NEW: UPDATE INCIDENT
+  static Future<bool> updateIncident(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/incidents/$id"),
+        headers: {
+          "Content-Type": "application/json",
+          if (_authToken != null) "Authorization": "Bearer $_authToken",
+        },
+        body: jsonEncode(data),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // NEW: DELETE INCIDENT
+  static Future<bool> deleteIncident(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/incidents/$id"),
+        headers: {
+          if (_authToken != null) "Authorization": "Bearer $_authToken",
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
       return false;
     }
   }

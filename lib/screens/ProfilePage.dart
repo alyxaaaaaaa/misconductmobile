@@ -1,9 +1,9 @@
-// lib/screens/ProfileScreen.dart
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/screens/LoginPage.dart'; 
 import 'package:misconductmobile/models/user.dart';
-import 'package:misconductmobile/services/api_service.dart';
+import 'package:misconductmobile/services/api_service.dart'; 
 import 'package:misconductmobile/screens/EditProfileScreen.dart'; 
+import 'package:misconductmobile/variables.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -57,8 +57,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Receive the User object directly after successful update
       if (result is User) {
         setState(() {
-             // 🎯 FIX: Update local state immediately with the new User object (which contains the new image URL)
-            _user = result;
+          // Update local state immediately with the new User object (which contains the new image URL)
+          _user = result;
         });
       }
       else if (result == true) { 
@@ -68,7 +68,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmLogout() async {
-    // ... (logout logic)
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Perform logout logic here (e.g., clearing tokens)
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()), 
+                (Route<dynamic> route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Color(0xFFD32F2F))),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _profileInfoRow(IconData icon, String label, String value) {
@@ -104,15 +126,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final String? profileImagePath = _user?.profilePicturePath;
     final bool hasProfilePicture = profileImagePath != null && profileImagePath.isNotEmpty;
 
-    // 🎯 CACHE BUSTING FIX: Append timestamp to the URL to force browser refresh
+    // --- FIX 1: Assemble the complete, cache-busting URL ---
     String? cacheBustingUrl;
     if (hasProfilePicture) {
-        cacheBustingUrl = profileImagePath! + '?v=${DateTime.now().millisecondsSinceEpoch}';
+      String fullPath = profileImagePath!;
+
+      // 🔑 Use the imported API_BASE_URL constant from variables.dart
+      if (!fullPath.startsWith('http')) {
+        fullPath = baseUrl + fullPath; // Assumes your constant is named API_BASE_URL
+      }
+      
+      // Append the cache-buster to force refresh
+      cacheBustingUrl = fullPath + '?v=${DateTime.now().millisecondsSinceEpoch}';
     }
 
     final ImageProvider? avatarImage = cacheBustingUrl != null 
-        ? NetworkImage(cacheBustingUrl) 
-        : null;
+      ? NetworkImage(cacheBustingUrl) 
+      : null;
+
+    // --- FIX 2: Use a unique key to force the CircleAvatar to rebuild ---
+    final Key avatarKey = hasProfilePicture 
+      ? ValueKey('profile_image_$profileImagePath') 
+      : const ValueKey('default_avatar'); 
 
 
     return Scaffold(
@@ -120,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text("User Profile"),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        actions: [], 
+        actions: const [], 
       ),
       
       body: Center(
@@ -147,20 +182,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Profile Avatar (Now tappable) 🖼️
+                          // Profile Avatar
                           GestureDetector(
                             onTap: _navigateToEditProfile, 
                             child: CircleAvatar(
+                              key: avatarKey, // 🔑 The key forces a redraw
                               radius: 50,
                               backgroundColor: primaryColor.withOpacity(0.1),
                               backgroundImage: avatarImage, 
                               child: hasProfilePicture
                                   ? null 
                                   : Icon(
-                                      isUserDataValid ? Icons.person_rounded : Icons.error_outline,
-                                      size: 60,
-                                      color: isUserDataValid ? primaryColor : Colors.red,
-                              ),
+                                        isUserDataValid ? Icons.person_rounded : Icons.error_outline,
+                                        size: 60,
+                                        color: isUserDataValid ? primaryColor : Colors.red,
+                                  ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -191,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           
                           const SizedBox(height: 24),
 
-                          // NEW: Edit Profile Button
+                          // Edit Profile Button
                           if (isUserDataValid && !_isLoading)
                             Column(
                               children: [

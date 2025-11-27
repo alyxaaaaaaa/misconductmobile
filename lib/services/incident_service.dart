@@ -17,8 +17,7 @@ class IncidentService {
     };
   }
 
-  // 1. CREATE INCIDENT (MODIFIED FOR OPTIMIZATION FEATURE)
-  // Returns a Map containing the created Incident object and the system's recommendation.
+  // 1. CREATE INCIDENT
   Future<Map<String, dynamic>> submitIncident(Incident incident) async {
     try {
       final response = await http.post(
@@ -29,14 +28,11 @@ class IncidentService {
 
       if (response.statusCode == 201) {
         final responseBody = jsonDecode(response.body);
-        
-        // Return both the Incident object and the recommendation string
         return {
           'incident': Incident.fromJson(responseBody['incident']),
           'recommendation': responseBody['recommendation'] as String,
         };
       } else if (response.statusCode == 422) {
-        // Validation error
         throw Exception(jsonDecode(response.body)['errors'] ?? 'Validation failed.');
       } else {
         throw Exception('Failed to file incident: ${response.statusCode} - ${response.body}');
@@ -47,8 +43,35 @@ class IncidentService {
     }
   }
 
-  // 2. FETCH ALL INCIDENTS
-  Future<List<Incident>> fetchAllIncidents() async {
+  // 2. FETCH INCIDENTS FILED BY AUTHENTICATED USER
+  /// Fetches incidents for the current authenticated user (or all if Admin).
+  /// The [userId] parameter is ignored in the URL, as filtering is token-based.
+  Future<List<Incident>> fetchUserIncidents(String userId) async {
+    // 🎯 FIX: Use the base endpoint URL
+    final uri = Uri.parse(_incidentBaseUrl); 
+    
+    try {
+      final response = await http.get(
+        uri,
+        headers: _getAuthHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final dynamic responseBody = jsonDecode(response.body);
+        List data = (responseBody is Map && responseBody.containsKey('data')) 
+                      ? responseBody['data'] as List 
+                      : responseBody as List;
+        
+        return data.map((i) => Incident.fromJson(i as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception("Failed to load user incidents: Server returned ${response.statusCode}");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // 3. FETCH INCIDENTS BY ROLE (Kept for clarity/future admin implementation)
+  Future<List<Incident>> fetchIncidentsByRole() async {
     final uri = Uri.parse(_incidentBaseUrl);
     try {
       final response = await http.get(
@@ -58,19 +81,19 @@ class IncidentService {
       if (response.statusCode == 200) {
         final dynamic responseBody = jsonDecode(response.body);
         List data = (responseBody is Map && responseBody.containsKey('data')) 
-                    ? responseBody['data'] as List 
-                    : responseBody as List;
+                      ? responseBody['data'] as List 
+                      : responseBody as List;
         
         return data.map((i) => Incident.fromJson(i as Map<String, dynamic>)).toList();
       } else {
-        throw Exception("Failed to load incidents: Server returned ${response.statusCode}");
+        throw Exception("Failed to load all incidents: Server returned ${response.statusCode}");
       }
     } catch (e) {
       rethrow;
     }
   }
 
-  // 3. GET SINGLE INCIDENT
+  // 4. GET SINGLE INCIDENT
   Future<Incident?> getIncident(int id) async {
     try {
       final response = await http.get(
@@ -86,7 +109,7 @@ class IncidentService {
     }
   }
   
-  // 4. UPDATE FULL INCIDENT
+  // 5. UPDATE FULL INCIDENT
   Future<bool> updateIncident(int id, Map<String, dynamic> data) async {
     try {
       final response = await http.put(
@@ -100,7 +123,7 @@ class IncidentService {
     }
   }
   
-  // 5. UPDATE DISCIPLINARY ACTION TAKEN (NEW PATCH ENDPOINT)
+  // 6. UPDATE DISCIPLINARY ACTION TAKEN
   Future<bool> updateActionTaken(int incidentId, String action) async {
     try {
       final response = await http.patch(
@@ -115,7 +138,7 @@ class IncidentService {
     }
   }
 
-  // 6. DELETE INCIDENT
+  // 7. DELETE INCIDENT
   Future<bool> deleteIncident(int id) async {
     try {
       final response = await http.delete(
