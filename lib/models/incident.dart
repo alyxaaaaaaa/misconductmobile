@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Incident {
   final int? incidentId;
 
@@ -15,6 +17,12 @@ class Incident {
   final String description;
 
   final String status;
+  
+  // --- NEW FIELDS FOR DISCIPLINARY ACTION OPTIMIZATION ---
+  final String? recommendation; // System's suggested action
+  final String? actionTaken;    // Final action recorded by admin
+  // --------------------------------------------------------
+  
   final String? createdAt;
 
   Incident({
@@ -31,11 +39,15 @@ class Incident {
     required this.specificOffense,
     required this.description,
     required this.status,
+    
+    this.recommendation, 
+    this.actionTaken,
+    
     this.createdAt,
   });
 
   factory Incident.fromJson(Map<String, dynamic> json) {
-
+    
     final String studentIdData = 
         json['student_id'] ??           
         json['student_id_number'] ??    
@@ -43,7 +55,7 @@ class Incident {
         '';
 
     return Incident(
-      incidentId: json['incident_id'],
+      incidentId: json['id'] ?? json['incident_id'], 
       
       studentId: studentIdData.toString(),
       fullName: json['full_name'] ?? '',
@@ -59,6 +71,9 @@ class Incident {
       description: json['description'] ?? '',
       
       status: json['status'] ?? 'Pending',
+
+      recommendation: json['recommendation'] as String?,
+      actionTaken: json['action_taken'] as String?,
       
       createdAt: json['created_at'],
     );
@@ -78,6 +93,7 @@ class Incident {
       'specificOffense': specificOffense,
       'description': description,
       'status': status,
+      'actionTaken': actionTaken, 
     };
   }
 }

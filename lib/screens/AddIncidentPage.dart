@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/services/api_service.dart';
-import 'package:intl/intl.dart'; 
+import 'package:misconductmobile/services/incident_service.dart';
+import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'IncidentsDetails.dart'; // Ensure this points to IncidentDetailScreen
 
 class IncidentsPage extends StatefulWidget {
   const IncidentsPage({super.key});
@@ -11,7 +13,10 @@ class IncidentsPage extends StatefulWidget {
 }
 
 class _IncidentsPageState extends State<IncidentsPage> {
-  // Text Controllers (Removed _program controller)
+  // 1. INSTANTIATE THE SERVICE
+  final IncidentService _incidentService = IncidentService();
+  
+  // Text Controllers
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
   final _section = TextEditingController();
@@ -22,7 +27,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
   String? _yearLevel;
   String? _offenseType; 
   String? _specificOffense; 
-  // State variable for Program
   String? _program; 
 
   DateTime? _incidentDate;
@@ -38,11 +42,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
   // List of available programs
   static const List<String> _programList = [
-    'BSIT',
-    'BSCS', 
-    'BSDSA', 
-    'BLIS',
-    'BSIS',
+    'BSIT', 'BSCS', 'BSDSA', 'BLIS', 'BSIS',
   ];
 
   // Define offense categories and their specific offenses
@@ -68,29 +68,25 @@ class _IncidentsPageState extends State<IncidentsPage> {
     
     errors.forEach((key, value) {
       if (value is List && value.isNotEmpty) {
-        // We look for 'studentId' or any other field key here
         errorMessage += '• ${value.first}\n';
       }
     });
     return errorMessage.trim();
   }
+  
+  // =========================================================================
+  // CORE SUBMISSION LOGIC 
+  // =========================================================================
 
   Future<void> _submit() async {
-    // Check if required fields are selected/filled (client-side pre-validation)
-    if (_incidentDate == null ||
-        _incidentTime == null ||
-        _offenseType == null ||
-        _specificOffense == null ||
-        _studentId.text.isEmpty ||
-        _fullName.text.isEmpty ||
-        // Check for required dropdowns
-        _program == null || 
-        _yearLevel == null) {
+    // Check if required fields are selected/filled 
+    if (_incidentDate == null || _incidentTime == null || _offenseType == null || 
+        _specificOffense == null || _studentId.text.isEmpty || _fullName.text.isEmpty || 
+        _program == null || _yearLevel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content:
-                Text("Please fill out all required fields (date, time, offenses, student info)."),
-            backgroundColor: Colors.orange, // Highlight missing client-side fields
+            content: Text("Please fill out all required fields (date, time, offenses, student info)."),
+            backgroundColor: Colors.orange,
           ),
       );
       return;
@@ -98,77 +94,162 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
     setState(() => _loading = true);
 
-    // 1. Combine Date and Time into a single DateTime object
     final incidentDateTime = DateTime(
-      _incidentDate!.year,
-      _incidentDate!.month,
-      _incidentDate!.day,
-      _incidentTime!.hour,
-      _incidentTime!.minute,
+      _incidentDate!.year, _incidentDate!.month, _incidentDate!.day,
+      _incidentTime!.hour, _incidentTime!.minute,
     );
 
-    // 2. Format the time to 24-hour format (H:i) required by the backend
     final formattedTime = DateFormat('HH:mm').format(incidentDateTime); 
 
-    // 3. Construct the Incident object
     final incident = Incident(
       studentId: _studentId.text,
       fullName: _fullName.text,
-      // Use the state variable for program
       program: _program ?? "", 
       yearLevel: _yearLevel ?? "",
       section: _section.text,
-      // FIX: Ensure only the date part is sent for backend validation
       dateOfIncident: _incidentDate!.toIso8601String().split('T').first, 
-      timeOfIncident: formattedTime, // 24-hour format
+      timeOfIncident: formattedTime,
       location: _location.text,
-      offenseCategory: _offenseType ?? "", // Minor/Major
-      specificOffense: _specificOffense ?? "", // The specific offense
+      offenseCategory: _offenseType ?? "",
+      specificOffense: _specificOffense ?? "",
       description: _description.text,
-      status: 'Pending', // Default status for a new submission
+      status: 'Pending',
+      // Since submission, these should be null/empty
+      recommendation: null,
+      actionTaken: null,
+      // No need for allInvolvedStudents here as we reverted that model change
     );
 
-    // IMPORTANT: ApiService.submitIncident must return the parsed JSON map 
-    // { 'message', 'errors' } if a 422 error occurs.
-    final response = await ApiService.submitIncident(incident);
+    try {
+      // FIX: Call the instance method on the service object
+      final response = await _incidentService.submitIncident(incident);
+      
+      setState(() => _loading = false);
 
-    setState(() => _loading = false);
+      if (mounted) {
+        // --- SUCCESS: The response contains the incident and the recommendation ---
+        final Incident filedIncident = response['incident'];
+        final String recommendation = response['recommendation'];
 
-    if (mounted) {
-      if (response is Map<String, dynamic> && response.containsKey('errors')) {
-        // --- BACKEND VALIDATION ERROR (HTTP 422) ---
-        // This is where the student ID error message is processed
-        final errorMessages = _formatBackendErrors(response['errors']);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessages),
-            backgroundColor: Colors.red.shade700, 
-            duration: const Duration(seconds: 7), 
-          ),
-        );
-      } else if (response is bool && response) {
-        // --- SUCCESS ---
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Incident submitted successfully!")),
-        );
-        Navigator.pop(context, true); 
-      } else {
-        // --- GENERAL FAILURE (Network, 500 server error, etc.) ---
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Failed to submit incident due to a server or connection error."),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showRecommendationDialog(context, recommendation, filedIncident); 
+      }
+    } catch (e) {
+      setState(() => _loading = false);
+      
+      if (mounted) {
+        // If the exception is from a validation error (Map of errors)
+        if (e is Exception && e.toString().startsWith('Exception: {') ) {
+          final errorData = e.toString().substring('Exception: '.length);
+          final Map<String, dynamic> response = jsonDecode(errorData);
+          
+          if (response.containsKey('errors')) {
+            final errorMessages = _formatBackendErrors(response['errors']);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessages),
+                backgroundColor: Colors.red.shade700, 
+                duration: const Duration(seconds: 7), 
+              ),
+            );
+          }
+        } else {
+          // General network or server error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Failed to submit incident: ${e.toString()}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
+
+  // =========================================================================
+  // RECOMMENDATION DIALOG 
+  // =========================================================================
+  void _showRecommendationDialog(BuildContext context, String recommendation, Incident filedIncident) {
+    // Clear the form fields after successful submission
+    _studentId.clear();
+    _fullName.clear();
+    _section.clear();
+    _location.clear();
+    _description.clear();
+    setState(() {
+      _incidentDate = null;
+      _incidentTime = null;
+      _offenseType = null;
+      _specificOffense = null;
+      _program = null;
+      _yearLevel = null;
+    });
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Incident Filed!', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('The report has been filed. For next steps, the system recommends:'),
+              const SizedBox(height: 15),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('System Recommendation:', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                    const SizedBox(height: 4),
+                    Text(
+                      recommendation,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('New Report'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            if (filedIncident.incidentId != null) 
+              TextButton(
+                child: const Text('View Report Details', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.of(context).pop(); 
+                  
+                  // Navigate to the Incident Detail Screen using pushReplacement
+                  Navigator.pushReplacement( 
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => IncidentDetailScreen(incident: filedIncident), 
+                    ),
+                  );
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    // Get the list of specific offenses for the currently selected offense type
     final specificOffenses = _offenseType != null
         ? _offenseList[_offenseType] ?? []
         : <String>[];
@@ -253,7 +334,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _pickerButton(
                   label: "Select Date of Incident",
                   icon: Icons.date_range,
-                  selectedDate: _incidentDate, // Pass state variable
+                  selectedDate: _incidentDate,
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
@@ -270,7 +351,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _pickerButton(
                   label: "Select Time of Incident",
                   icon: Icons.access_time,
-                  selectedTime: _incidentTime, // Pass state variable
+                  selectedTime: _incidentTime,
                   onTap: () async {
                     final time = await showTimePicker(
                       context: context,
@@ -292,7 +373,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                   onChangedCallback: (val) {
                     setState(() {
                       _offenseType = val;
-                      // Reset specific offense when the category changes
                       _specificOffense = null; 
                     });
                   },
@@ -410,7 +490,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
   }
 
-  // MODIFIED _pickerButton with robust null checks for TimeOfDay.format
+  // MODIFIED _pickerButton to change the text color of the selection to black
   Widget _pickerButton({
     required String label,
     required IconData icon,
@@ -419,17 +499,21 @@ class _IncidentsPageState extends State<IncidentsPage> {
     TimeOfDay? selectedTime,
   }) {
     String displayLabel = label;
+    Color labelColor = primaryColor; // Default color for unselected label
 
     // Logic for displaying the selected DATE
     if (icon == Icons.date_range && selectedDate != null) {
       displayLabel = 'Date: ${_dateFormatter.format(selectedDate)}';
+      labelColor = Colors.black; // Set text to black when a date is selected
     
-    // Logic for displaying the selected TIME (The null check ensures .format() is only called if selectedTime is non-null)
+    // Logic for displaying the selected TIME
     } else if (icon == Icons.access_time) {
       if (selectedTime != null) {
-          displayLabel = 'Time: ${selectedTime.format(context)}';
+        displayLabel = 'Time: ${selectedTime.format(context)}';
+        labelColor = Colors.black; // Set text to black when a time is selected
       } else {
-        displayLabel = label; // Fallback to "Select Time of Incident"
+        displayLabel = label;
+        labelColor = primaryColor; // Revert to green if no time is selected
       }
     }
 
@@ -437,7 +521,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green[50],
-        foregroundColor: primaryColor,
+        foregroundColor: primaryColor, // Controls the icon color and splash
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -445,11 +529,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: primaryColor),
+          Icon(icon, color: primaryColor), // Icon remains green (primaryColor)
           const SizedBox(width: 12),
           Text(
             displayLabel,
-            style: const TextStyle(color: primaryColor),
+            style: TextStyle(color: labelColor), // Dynamically set text color
           ),
         ],
       ),

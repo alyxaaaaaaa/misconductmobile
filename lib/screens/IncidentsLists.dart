@@ -1,40 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/services/api_service.dart';
+import 'package:misconductmobile/services/incident_service.dart';
 import 'package:intl/intl.dart';
-import 'package:misconductmobile/screens/IncidentsDetails.dart'; // Ensure this is imported
+import 'package:misconductmobile/screens/IncidentsDetails.dart';
 
 class IncidentsList extends StatefulWidget {
   const IncidentsList({super.key});
 
   @override
-  // FIX: Use the public state class name
   State<IncidentsList> createState() => IncidentsListState();
 }
 
-// FIX: Make the State class public (remove underscore)
 class IncidentsListState extends State<IncidentsList> {
   // Colors
   static const primaryColor = Color(0xFF2E7D32);
+
+  // 1. Instantiate the service once
+  final IncidentService _incidentService = IncidentService();
   
   late Future<List<Incident>> _incidentsFuture;
 
   @override
   void initState() {
     super.initState();
-    _incidentsFuture = _fetchUserIncidents();
+    _incidentsFuture = _fetchIncidents();
   }
 
   // PUBLIC METHOD: Called by Dashboard to force a data refresh
   void refreshIncidents() {
     setState(() {
-      _incidentsFuture = _fetchUserIncidents();
+      _incidentsFuture = _fetchIncidents();
     });
   }
 
-  Future<List<Incident>> _fetchUserIncidents() async {
+  // 2. Renamed to match the service file and corrected the call
+  Future<List<Incident>> _fetchIncidents() async {
     try {
-      return await ApiService.fetchUserIncidents();
+      // FIX: Call the instance method on the instantiated service object
+      return await _incidentService.fetchAllIncidents();
     } catch (e) {
       rethrow;
     }
@@ -49,10 +52,15 @@ class IncidentsListState extends State<IncidentsList> {
         chipColor = Colors.orange;
         break;
       case 'approved':
+      case 'resolved': // Added 'resolved' for the new action_taken flow
         chipColor = primaryColor;
         break;
       case 'rejected':
+      case 'closed': // Added 'closed'
         chipColor = Colors.red;
+        break;
+      case 'under review':
+        chipColor = Colors.blueGrey;
         break;
       default:
         chipColor = Colors.grey;
@@ -81,7 +89,13 @@ class IncidentsListState extends State<IncidentsList> {
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchUserIncidents, 
+        // 3. Call the wrapper method which also updates the Future
+        onRefresh: () {
+          setState(() {
+            _incidentsFuture = _fetchIncidents();
+          });
+          return _incidentsFuture;
+        },
         color: primaryColor,
         child: Container(
           padding: const EdgeInsets.only(top: 8.0),
@@ -161,14 +175,15 @@ class IncidentsListState extends State<IncidentsList> {
                         ),
                         trailing: _buildStatusChip(incident.status),
 
-                        // 🎯 NEW: Navigation to the detail screen
+                        // Navigation to the detail screen
                         onTap: () {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => IncidentDetailScreen(incident: incident),
                                 ),
-                            );
+                            // 4. Force a refresh when returning from the detail screen
+                            ).then((_) => refreshIncidents());
                         },
                       ),
                     );
