@@ -1,44 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/services/api_service.dart';
+import 'package:provider/provider.dart'; // 🎯 NEW: Import Provider
+import '../provider/incident_provider.dart'; // 🎯 NEW: Import your Provider
+// NOTE: ApiService import is no longer needed here, as the Provider handles the service call
 import 'package:intl/intl.dart';
-import 'package:misconductmobile/screens/IncidentsDetails.dart'; // Ensure this is imported
+import 'package:misconductmobile/screens/IncidentsDetails.dart'; 
 
 class IncidentsList extends StatefulWidget {
   const IncidentsList({super.key});
 
   @override
-  // FIX: Use the public state class name
   State<IncidentsList> createState() => IncidentsListState();
 }
 
-// FIX: Make the State class public (remove underscore)
 class IncidentsListState extends State<IncidentsList> {
   // Colors
   static const primaryColor = Color(0xFF2E7D32);
   
-  late Future<List<Incident>> _incidentsFuture;
+  // ❌ REMOVE: We no longer need a local Future, as the Provider holds the data.
+  // late Future<List<Incident>> _incidentsFuture;
 
   @override
   void initState() {
     super.initState();
-    _incidentsFuture = _fetchUserIncidents();
+    // 🎯 INITIAL LOAD: Use Future.microtask to call loadIncidents after the build method is complete.
+    Future.microtask(() => 
+      Provider.of<IncidentProvider>(context, listen: false).loadIncidents()
+    );
   }
 
   // PUBLIC METHOD: Called by Dashboard to force a data refresh
   void refreshIncidents() {
-    setState(() {
-      _incidentsFuture = _fetchUserIncidents();
-    });
+    // 🎯 REFRESH: Simply call the provider's load method.
+    Provider.of<IncidentProvider>(context, listen: false).loadIncidents();
   }
 
-  Future<List<Incident>> _fetchUserIncidents() async {
-    try {
-      return await ApiService.fetchUserIncidents();
-    } catch (e) {
-      rethrow;
-    }
-  }
+  // ❌ REMOVE: The service logic is now inside IncidentProvider.
+  // Future<List<Incident>> _fetchUserIncidents() async {
+  //   try {
+  //     return await ApiService.fetchUserIncidents();
+  //   } catch (e) {
+  //     rethrow;
+  //   }
+  // }
 
   Widget _buildStatusChip(String status) {
     Color chipColor;
@@ -74,108 +77,97 @@ class IncidentsListState extends State<IncidentsList> {
 
   @override
   Widget build(BuildContext context) {
+    // 🎯 WATCH THE PROVIDER: The widget rebuilds whenever the provider calls notifyListeners()
+    final incidentProvider = Provider.of<IncidentProvider>(context);
+    final incidents = incidentProvider.incidents;
+    final isLoading = incidentProvider.isLoading;
+
+    // A utility function to show the error if one occurred (not explicitly handled in provider yet, but good practice)
+    // Note: The original implementation didn't explicitly store errors, so we rely on the provider's state.
+    // However, the `RefreshIndicator` handles errors thrown by `onRefresh` nicely, so we'll use that.
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Filed Incidents"),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
+      // 🎯 ON REFRESH: Call the provider's method
       body: RefreshIndicator(
-        onRefresh: _fetchUserIncidents, 
+        onRefresh: incidentProvider.loadIncidents, 
         color: primaryColor,
         child: Container(
           padding: const EdgeInsets.only(top: 8.0),
-          child: FutureBuilder<List<Incident>>(
-            future: _incidentsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: primaryColor));
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(24.0),
-                    child: Text(
-                      'Error loading incidents: ${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
-                    ),
-                  ),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
-                  child: SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.info_outline, size: 40, color: Colors.grey),
-                        SizedBox(height: 10),
-                        Text(
-                          'No incidents have been filed yet.',
-                          style: TextStyle(color: Colors.grey, fontSize: 18),
-                        ),
-                        SizedBox(height: 100),
-                      ],
-                    ),
-                  ),
-                );
-              } else {
-                final incidents = snapshot.data!;
-                return ListView.builder(
-                  itemCount: incidents.length,
-                  padding: const EdgeInsets.only(bottom: 80), 
-                  itemBuilder: (context, index) {
-                    final incident = incidents[index];
-                    final date = DateTime.tryParse(incident.dateOfIncident);
-                    final formattedDate = date != null ? DateFormat('MMM dd, yyyy').format(date) : 'N/A';
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: CircleAvatar(
-                          backgroundColor: primaryColor.withOpacity(0.1),
-                          child: const Icon(Icons.warning_amber_rounded, color: primaryColor),
-                        ),
-                        title: Text(
-                          // Student Name is the title
-                          incident.fullName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          // 🎯 BUILD WIDGETS BASED ON PROVIDER STATE, replacing FutureBuilder
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator(color: primaryColor))
+              : (incidents.isEmpty 
+                  ? const Center(
+                      child: SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 4),
-                            // Specific Offense is the primary subtitle line
+                            Icon(Icons.info_outline, size: 40, color: Colors.grey),
+                            SizedBox(height: 10),
                             Text(
-                              incident.specificOffense,
-                              style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                              'No incidents have been filed yet.',
+                              style: TextStyle(color: Colors.grey, fontSize: 18),
                             ),
-                            const SizedBox(height: 2),
-                            Text('${incident.offenseCategory} - ID: ${incident.studentId}'),
-                            Text('Date: $formattedDate at ${incident.timeOfIncident}'),
+                            SizedBox(height: 100),
                           ],
                         ),
-                        trailing: _buildStatusChip(incident.status),
-
-                        // 🎯 NEW: Navigation to the detail screen
-                        onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => IncidentDetailScreen(incident: incident),
-                                ),
-                            );
-                        },
                       ),
-                    );
-                  },
-                );
-              }
-            },
+                    )
+                  : ListView.builder(
+                      itemCount: incidents.length,
+                      padding: const EdgeInsets.only(bottom: 80), 
+                      itemBuilder: (context, index) {
+                        final incident = incidents[index];
+                        final date = DateTime.tryParse(incident.dateOfIncident);
+                        final formattedDate = date != null ? DateFormat('MMM dd, yyyy').format(date) : 'N/A';
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(12),
+                            leading: CircleAvatar(
+                              backgroundColor: primaryColor.withOpacity(0.1),
+                              child: const Icon(Icons.warning_amber_rounded, color: primaryColor),
+                            ),
+                            title: Text(
+                              incident.fullName,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  incident.specificOffense,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                                ),
+                                const SizedBox(height: 2),
+                                Text('${incident.offenseCategory} - ID: ${incident.studentId}'),
+                                Text('Date: $formattedDate at ${incident.timeOfIncident}'),
+                              ],
+                            ),
+                            trailing: _buildStatusChip(incident.status),
+
+                            onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => IncidentDetailScreen(incident: incident),
+                                    ),
+                                );
+                            },
+                          ),
+                        );
+                      },
+                    )
           ),
         ),
       ),

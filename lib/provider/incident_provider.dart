@@ -1,46 +1,60 @@
-// incident_provider.dart
+// IncidentProvider.dart
 
-import 'package:flutter/foundation.dart';
-import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/services/api_service.dart';
+import 'package:flutter/material.dart';
+import '../models/incident.dart';
+import '../services/incident_service.dart';
 
-class IncidentProvider extends ChangeNotifier {
-  // --- STATE ---
-  List<Incident> _incidents = [];
-  bool _isLoading = false;
-  String? _errorMessage;
+class IncidentProvider with ChangeNotifier {
+  List<Incident> incidents = [];
+  bool isLoading = false;
 
-  List<Incident> get incidents => _incidents;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  final IncidentService _service = IncidentService();
 
-  // --- ACTIONS ---
-
-  // Fetches incidents and updates the state
-  Future<void> fetchIncidents() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners(); // Notify listeners that loading has started
+  Future<void> loadIncidents() async { // Made return type explicit
+    isLoading = true;
+    notifyListeners();
 
     try {
-      final fetchedIncidents = await ApiService.fetchUserIncidents();
-      _incidents = fetchedIncidents;
-      _errorMessage = null;
+      // 🎯 RENAME 1: Use the new consolidated fetchIncidents()
+      incidents = await _service.fetchIncidents(); 
     } catch (e) {
-      _errorMessage = 'Failed to load incidents: $e';
-      if (kDebugMode) {
-        print(_errorMessage);
-      }
-      _incidents = []; // Clear old data on error
-    } finally {
-      _isLoading = false;
-      notifyListeners(); // Notify listeners when loading is complete (success or failure)
+      print("Error loading incidents: $e");
+      // Optionally handle error state here
+    }
+    
+    isLoading = false;
+    notifyListeners();
+  }
+
+  /// CREATE with return value (works with recommendation popup)
+  Future<Map<String, dynamic>> createIncident(Incident incident) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      // 🎯 RENAME 2: Use the new clean createIncident()
+      final response = await _service.createIncident(incident); 
+
+      // Reload the list to include the new incident
+      await loadIncidents(); 
+      isLoading = false;
+      notifyListeners();
+
+      return response; // <-- RETURN to UI
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      rethrow;
     }
   }
 
-  // You would call this method from your submission screen
-  // after a successful incident submission.
-  Future<void> reloadIncidentsAfterSubmission() async {
-    await fetchIncidents();
+  Future<void> updateIncident(Incident incident) async {
+    await _service.updateIncident(incident);
+    await loadIncidents();
+  }
+
+  Future<void> deleteIncident(int id) async {
+    await _service.deleteIncident(id);
+    await loadIncidents();
   }
 }

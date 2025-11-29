@@ -16,33 +16,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   
   static const primaryColor = Color(0xFF2E7D32);
 
-  // 🎯 FIX: GlobalKey now uses the public class name IncidentsListState
-  final GlobalKey<IncidentsListState> incidentsListKey = GlobalKey<IncidentsListState>();
-
   // Screens for the persistent tabs (List and Profile only)
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    // Initialize screens, passing the key to the IncidentsList
+    // Initialize screens
     _screens = [
-      IncidentsList(key: incidentsListKey), // 0: Home Tab -> Incidents List
+      const IncidentsList(), // 0: Home Tab -> Incidents List
       const ProfileScreen(), // 1: Profile Tab
     ];
   }
 
   void _navigateToAddIncidentScreen() {
-    // Navigates to the form and waits for a result (true on successful submission)
+    // Navigates to the form.
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const IncidentsPage()), // Launch the ADD form
-    ).then((result) {
-      // 🎯 REFRESH LOGIC: If result is true AND we are on the Home tab (index 0), refresh.
-      if (result == true && _currentIndex == 0) {
-        incidentsListKey.currentState?.refreshIncidents();
-      }
-    });
+      // NOTE: This should likely be named 'IncidentsPage' (the form you showed earlier)
+      MaterialPageRoute(builder: (_) => const IncidentsPage()), 
+    );
+    // REMOVE the .then((result) {...}) callback entirely.
+    // Why? Because when the AddIncidentPage successfully calls 
+    // `incidentProvider.createIncident(incident)`, the provider automatically
+    // calls `loadIncidents()` and `notifyListeners()`. The IncidentsList
+    // widget listens to those changes and updates itself automatically.
   }
 
   void _onTabTapped(int index) {

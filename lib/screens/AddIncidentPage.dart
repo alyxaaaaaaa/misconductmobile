@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 🎯 NEW: Import Provider
+import '../provider/incident_provider.dart'; // 🎯 NEW: Import your Provider
 import 'package:misconductmobile/models/incident.dart';
-import 'package:misconductmobile/services/incident_service.dart';
+// import 'package:misconductmobile/services/incident_service.dart'; // ❌ REMOVE: No longer needed here
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'IncidentsDetails.dart'; 
@@ -13,8 +15,8 @@ class IncidentsPage extends StatefulWidget {
 }
 
 class _IncidentsPageState extends State<IncidentsPage> {
-  // 1. INSTANTIATE THE SERVICE
-  final IncidentService _incidentService = IncidentService();
+  // ❌ REMOVE: 1. INSTANTIATE THE SERVICE
+  // final IncidentService _incidentService = IncidentService(); 
   
   // Text Controllers
   final _studentId = TextEditingController();
@@ -32,7 +34,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
   DateTime? _incidentDate;
   TimeOfDay? _incidentTime;
 
-  bool _loading = false;
+  // The loading state will now be managed by the Provider's 'isLoading' property
+  // We can keep this local loading state if we want to immediately control the button,
+  // but it's often simpler to rely on the provider's state if we're reloading the list.
+  // For this form, we'll keep the local loading state for immediate button control.
+  bool _loading = false; 
 
   // Colors
   static const primaryColor = Color(0xFF2E7D32);
@@ -64,22 +70,18 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
   /**
    * Helper to format validation errors from the backend.
-   * IMPROVEMENT: Explicitly check for the 'studentId' error and format it clearly.
    */
   String _formatBackendErrors(Map<String, dynamic> errors) {
     String errorMessage = 'Please correct the following issues:\n';
     
     // Check specifically for the studentId error
     if (errors.containsKey('studentId') && errors['studentId'] is List && errors['studentId'].isNotEmpty) {
-        // The error message from Laravel will be something like "The selected student id is invalid."
-        // We can rephrase it for clarity.
-        if (errors['studentId'].first.toString().contains('invalid')) {
-             errorMessage += '• **Student Record Not Found:** The Student ID Number is not registered in the system.\n';
-        } else {
-             errorMessage += '• ${errors['studentId'].first}\n';
-        }
-        // Remove 'studentId' from the list to avoid duplicate formatting below
-        errors.remove('studentId'); 
+      if (errors['studentId'].first.toString().contains('invalid')) {
+           errorMessage += '• **Student Record Not Found:** The Student ID Number is not registered in the system.\n';
+      } else {
+           errorMessage += '• ${errors['studentId'].first}\n';
+      }
+      errors.remove('studentId'); 
     }
 
     // Format all other errors
@@ -112,6 +114,9 @@ class _IncidentsPageState extends State<IncidentsPage> {
       return;
     }
 
+    // 🎯 GET INCIDENT PROVIDER (listen: false because we are only calling a function, not watching state)
+    final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);
+
     setState(() => _loading = true);
 
     final incidentDateTime = DateTime(
@@ -139,7 +144,8 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
 
     try {
-      final response = await _incidentService.submitIncident(incident);
+      // 🎯 CALL PROVIDER'S METHOD INSTEAD OF SERVICE DIRECTLY
+      final response = await incidentProvider.createIncident(incident);
       
       setState(() => _loading = false);
 
@@ -473,10 +479,10 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
   }
 
-  // Reusable Widgets
-  // ------------------------------------------------------------------
-
+  // Reusable Widgets (omitted for brevity, as they were not modified)
+  // ...
   Widget _input(String label, TextEditingController controller, IconData icon) {
+    // ... (unchanged)
     return TextField(
       controller: controller,
       decoration: InputDecoration(
@@ -491,13 +497,14 @@ class _IncidentsPageState extends State<IncidentsPage> {
       ),
     );
   }
-
+  
   Widget _dropdown({
     required String label,
     required String? value,
     required List<String> items,
     required void Function(String?) onChangedCallback,
   }) {
+    // ... (unchanged)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -519,7 +526,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
   }
 
-  // MODIFIED _pickerButton to change the text color of the selection to black
   Widget _pickerButton({
     required String label,
     required IconData icon,
@@ -527,6 +533,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
     DateTime? selectedDate,
     TimeOfDay? selectedTime,
   }) {
+    // ... (unchanged)
     String displayLabel = label;
     Color labelColor = primaryColor; // Default color for unselected label
 
