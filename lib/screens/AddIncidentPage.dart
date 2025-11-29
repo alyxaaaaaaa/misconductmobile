@@ -3,7 +3,7 @@ import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/services/incident_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
-import 'IncidentsDetails.dart'; // Ensure this points to IncidentDetailScreen
+import 'IncidentsDetails.dart'; 
 
 class IncidentsPage extends StatefulWidget {
   const IncidentsPage({super.key});
@@ -62,15 +62,35 @@ class _IncidentsPageState extends State<IncidentsPage> {
     ],
   };
 
-  // Helper to format validation errors from the backend.
+  /**
+   * Helper to format validation errors from the backend.
+   * IMPROVEMENT: Explicitly check for the 'studentId' error and format it clearly.
+   */
   String _formatBackendErrors(Map<String, dynamic> errors) {
     String errorMessage = 'Please correct the following issues:\n';
     
+    // Check specifically for the studentId error
+    if (errors.containsKey('studentId') && errors['studentId'] is List && errors['studentId'].isNotEmpty) {
+        // The error message from Laravel will be something like "The selected student id is invalid."
+        // We can rephrase it for clarity.
+        if (errors['studentId'].first.toString().contains('invalid')) {
+             errorMessage += '• **Student Record Not Found:** The Student ID Number is not registered in the system.\n';
+        } else {
+             errorMessage += '• ${errors['studentId'].first}\n';
+        }
+        // Remove 'studentId' from the list to avoid duplicate formatting below
+        errors.remove('studentId'); 
+    }
+
+    // Format all other errors
     errors.forEach((key, value) {
       if (value is List && value.isNotEmpty) {
-        errorMessage += '• ${value.first}\n';
+        // Format key (e.g., 'fullName' -> 'Full Name')
+        final formattedKey = key.replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}').replaceAll('Id', ' ID').trim();
+        errorMessage += '• $formattedKey: ${value.first}\n';
       }
     });
+    
     return errorMessage.trim();
   }
   
@@ -114,14 +134,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
       specificOffense: _specificOffense ?? "",
       description: _description.text,
       status: 'Pending',
-      // Since submission, these should be null/empty
       recommendation: null,
       actionTaken: null,
-      // No need for allInvolvedStudents here as we reverted that model change
     );
 
     try {
-      // FIX: Call the instance method on the service object
       final response = await _incidentService.submitIncident(incident);
       
       setState(() => _loading = false);
@@ -137,33 +154,45 @@ class _IncidentsPageState extends State<IncidentsPage> {
       setState(() => _loading = false);
       
       if (mounted) {
-        // If the exception is from a validation error (Map of errors)
-        if (e is Exception && e.toString().startsWith('Exception: {') ) {
-          final errorData = e.toString().substring('Exception: '.length);
-          final Map<String, dynamic> response = jsonDecode(errorData);
-          
-          if (response.containsKey('errors')) {
-            final errorMessages = _formatBackendErrors(response['errors']);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessages),
-                backgroundColor: Colors.red.shade700, 
-                duration: const Duration(seconds: 7), 
-              ),
-            );
+        // IMPROVEMENT: Cleaner parsing for the backend error format
+        if (e.toString().startsWith('Exception: {')) {
+          try {
+            final errorData = e.toString().substring('Exception: '.length);
+            final Map<String, dynamic> response = jsonDecode(errorData);
+            
+            if (response.containsKey('errors')) {
+              final errorMessages = _formatBackendErrors(response['errors']);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  // Use SelectableText to allow user to copy the long error
+                  content: SelectableText(errorMessages, style: const TextStyle(color: Colors.white)), 
+                  backgroundColor: Colors.red.shade700, 
+                  duration: const Duration(seconds: 7), 
+                ),
+              );
+            }
+          } catch (jsonE) {
+            // Fallback for badly formatted JSON from the backend
+            _showGeneralErrorSnackBar(context, "An unknown validation error occurred.", e.toString());
           }
         } else {
           // General network or server error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Failed to submit incident: ${e.toString()}"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showGeneralErrorSnackBar(context, "Failed to submit incident.", e.toString());
         }
       }
     }
   }
+
+  // Helper function for showing general errors
+  void _showGeneralErrorSnackBar(BuildContext context, String message, String details) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("$message: $details"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
 
   // =========================================================================
   // RECOMMENDATION DIALOG 
@@ -188,7 +217,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Incident Filed!', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          title: const Text('Incident Filed! ✅', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
