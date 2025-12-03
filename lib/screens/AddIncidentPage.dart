@@ -187,7 +187,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Incident Filed! ✅', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          title: const Text('Incident Filed!', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
