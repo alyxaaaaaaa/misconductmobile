@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 🎯 NEW: Import Provider
-import '../provider/incident_provider.dart'; // 🎯 NEW: Import your Provider
+import 'package:provider/provider.dart'; 
+import '../provider/incident_provider.dart'; 
 import 'package:misconductmobile/models/incident.dart';
-// import 'package:misconductmobile/services/incident_service.dart'; // ❌ REMOVE: No longer needed here
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'IncidentsDetails.dart'; 
@@ -15,17 +14,13 @@ class IncidentsPage extends StatefulWidget {
 }
 
 class _IncidentsPageState extends State<IncidentsPage> {
-  // ❌ REMOVE: 1. INSTANTIATE THE SERVICE
-  // final IncidentService _incidentService = IncidentService(); 
-  
-  // Text Controllers
+
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
   final _section = TextEditingController();
   final _location = TextEditingController();
   final _description = TextEditingController();
 
-  // State variables for dropdowns
   String? _yearLevel;
   String? _offenseType; 
   String? _specificOffense; 
@@ -34,24 +29,16 @@ class _IncidentsPageState extends State<IncidentsPage> {
   DateTime? _incidentDate;
   TimeOfDay? _incidentTime;
 
-  // The loading state will now be managed by the Provider's 'isLoading' property
-  // We can keep this local loading state if we want to immediately control the button,
-  // but it's often simpler to rely on the provider's state if we're reloading the list.
-  // For this form, we'll keep the local loading state for immediate button control.
   bool _loading = false; 
 
-  // Colors
   static const primaryColor = Color(0xFF2E7D32);
 
-  // Date formatter for displaying selected date in the button
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy'); 
 
-  // List of available programs
   static const List<String> _programList = [
     'BSIT', 'BSCS', 'BSDSA', 'BLIS', 'BSIS',
   ];
 
-  // Define offense categories and their specific offenses
   static const Map<String, List<String>> _offenseList = {
     "Minor Offense": [
       "Failure to wear uniform", "Pornographic materials", "Littering", 
@@ -68,13 +55,9 @@ class _IncidentsPageState extends State<IncidentsPage> {
     ],
   };
 
-  /**
-   * Helper to format validation errors from the backend.
-   */
   String _formatBackendErrors(Map<String, dynamic> errors) {
     String errorMessage = 'Please correct the following issues:\n';
     
-    // Check specifically for the studentId error
     if (errors.containsKey('studentId') && errors['studentId'] is List && errors['studentId'].isNotEmpty) {
       if (errors['studentId'].first.toString().contains('invalid')) {
            errorMessage += '• **Student Record Not Found:** The Student ID Number is not registered in the system.\n';
@@ -84,10 +67,8 @@ class _IncidentsPageState extends State<IncidentsPage> {
       errors.remove('studentId'); 
     }
 
-    // Format all other errors
     errors.forEach((key, value) {
       if (value is List && value.isNotEmpty) {
-        // Format key (e.g., 'fullName' -> 'Full Name')
         final formattedKey = key.replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}').replaceAll('Id', ' ID').trim();
         errorMessage += '• $formattedKey: ${value.first}\n';
       }
@@ -96,25 +77,19 @@ class _IncidentsPageState extends State<IncidentsPage> {
     return errorMessage.trim();
   }
   
-  // =========================================================================
-  // CORE SUBMISSION LOGIC 
-  // =========================================================================
-
   Future<void> _submit() async {
-    // Check if required fields are selected/filled 
     if (_incidentDate == null || _incidentTime == null || _offenseType == null || 
         _specificOffense == null || _studentId.text.isEmpty || _fullName.text.isEmpty || 
         _program == null || _yearLevel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Please fill out all required fields (date, time, offenses, student info)."),
+            content: Text("Please fill out all."),
             backgroundColor: Colors.orange,
           ),
       );
       return;
     }
 
-    // 🎯 GET INCIDENT PROVIDER (listen: false because we are only calling a function, not watching state)
     final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);
 
     setState(() => _loading = true);
@@ -144,13 +119,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
 
     try {
-      // 🎯 CALL PROVIDER'S METHOD INSTEAD OF SERVICE DIRECTLY
       final response = await incidentProvider.createIncident(incident);
       
       setState(() => _loading = false);
 
       if (mounted) {
-        // --- SUCCESS: The response contains the incident and the recommendation ---
         final Incident filedIncident = response['incident'];
         final String recommendation = response['recommendation'];
 
@@ -160,7 +133,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
       setState(() => _loading = false);
       
       if (mounted) {
-        // IMPROVEMENT: Cleaner parsing for the backend error format
         if (e.toString().startsWith('Exception: {')) {
           try {
             final errorData = e.toString().substring('Exception: '.length);
@@ -170,7 +142,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
               final errorMessages = _formatBackendErrors(response['errors']);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  // Use SelectableText to allow user to copy the long error
                   content: SelectableText(errorMessages, style: const TextStyle(color: Colors.white)), 
                   backgroundColor: Colors.red.shade700, 
                   duration: const Duration(seconds: 7), 
@@ -178,18 +149,15 @@ class _IncidentsPageState extends State<IncidentsPage> {
               );
             }
           } catch (jsonE) {
-            // Fallback for badly formatted JSON from the backend
             _showGeneralErrorSnackBar(context, "An unknown validation error occurred.", e.toString());
           }
         } else {
-          // General network or server error
           _showGeneralErrorSnackBar(context, "Failed to submit incident.", e.toString());
         }
       }
     }
   }
 
-  // Helper function for showing general errors
   void _showGeneralErrorSnackBar(BuildContext context, String message, String details) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -200,11 +168,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
   }
 
 
-  // =========================================================================
-  // RECOMMENDATION DIALOG 
-  // =========================================================================
   void _showRecommendationDialog(BuildContext context, String recommendation, Incident filedIncident) {
-    // Clear the form fields after successful submission
     _studentId.clear();
     _fullName.clear();
     _section.clear();
@@ -264,8 +228,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 child: const Text('View Report Details', style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () {
                   Navigator.of(context).pop(); 
-                  
-                  // Navigate to the Incident Detail Screen using pushReplacement
+
                   Navigator.pushReplacement( 
                     context,
                     MaterialPageRoute(
@@ -344,7 +307,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _input("Full Name", _fullName, Icons.person),
                 _gap(),
 
-                // Program Dropdown
                 _dropdown(
                   label: "Program",
                   value: _program,
@@ -353,7 +315,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 ),
                 _gap(),
 
-                // Year Level Dropdown
                 _dropdown(
                   label: "Year Level",
                   value: _yearLevel,
@@ -365,7 +326,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _input("Section", _section, Icons.group),
                 _gap(),
 
-                // Date Picker 
                 _pickerButton(
                   label: "Select Date of Incident",
                   icon: Icons.date_range,
@@ -382,7 +342,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 ),
                 _gap(),
 
-                // Time Picker
                 _pickerButton(
                   label: "Select Time of Incident",
                   icon: Icons.access_time,
@@ -400,7 +359,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 _input("Location of Incident", _location, Icons.place),
                 _gap(),
 
-                // Offense Type dropdown (Category)
                 _dropdown(
                   label: "Offense Type (Category)",
                   value: _offenseType,
@@ -414,7 +372,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                 ),
                 _gap(),
 
-                // Specific Offense dropdown, conditionally displayed
                 if (_offenseType != null) ...[
                   _dropdown(
                     label: "Specific Offense",
@@ -426,7 +383,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
                   _gap(),
                 ],
 
-                // Description
                 TextField(
                   controller: _description,
                   maxLines: 4,
@@ -479,10 +435,8 @@ class _IncidentsPageState extends State<IncidentsPage> {
     );
   }
 
-  // Reusable Widgets (omitted for brevity, as they were not modified)
-  // ...
+
   Widget _input(String label, TextEditingController controller, IconData icon) {
-    // ... (unchanged)
     return TextField(
       controller: controller,
       decoration: InputDecoration(
@@ -504,7 +458,6 @@ class _IncidentsPageState extends State<IncidentsPage> {
     required List<String> items,
     required void Function(String?) onChangedCallback,
   }) {
-    // ... (unchanged)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -533,23 +486,20 @@ class _IncidentsPageState extends State<IncidentsPage> {
     DateTime? selectedDate,
     TimeOfDay? selectedTime,
   }) {
-    // ... (unchanged)
     String displayLabel = label;
-    Color labelColor = primaryColor; // Default color for unselected label
+    Color labelColor = primaryColor; 
 
-    // Logic for displaying the selected DATE
     if (icon == Icons.date_range && selectedDate != null) {
       displayLabel = 'Date: ${_dateFormatter.format(selectedDate)}';
-      labelColor = Colors.black; // Set text to black when a date is selected
-    
-    // Logic for displaying the selected TIME
+      labelColor = Colors.black; 
+
     } else if (icon == Icons.access_time) {
       if (selectedTime != null) {
         displayLabel = 'Time: ${selectedTime.format(context)}';
-        labelColor = Colors.black; // Set text to black when a time is selected
+        labelColor = Colors.black; 
       } else {
         displayLabel = label;
-        labelColor = primaryColor; // Revert to green if no time is selected
+        labelColor = primaryColor; 
       }
     }
 
@@ -557,7 +507,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.green[50],
-        foregroundColor: primaryColor, // Controls the icon color and splash
+        foregroundColor: primaryColor, 
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -565,11 +515,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: primaryColor), // Icon remains green (primaryColor)
+          Icon(icon, color: primaryColor), 
           const SizedBox(width: 12),
           Text(
             displayLabel,
-            style: TextStyle(color: labelColor), // Dynamically set text color
+            style: TextStyle(color: labelColor), 
           ),
         ],
       ),

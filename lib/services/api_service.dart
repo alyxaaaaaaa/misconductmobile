@@ -1,9 +1,8 @@
-// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart'; 
-import 'package:misconductmobile/variables.dart'; // Contains baseUrl
+import 'package:misconductmobile/variables.dart'; 
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/models/user.dart';
 
@@ -16,7 +15,6 @@ class ApiService {
 
   static String? getAuthToken() => _authToken;
 
-  //          LOGIN METHOD
   static Future<Map<String, dynamic>?> login(
       String email, String password) async {
     try {
@@ -39,7 +37,6 @@ class ApiService {
     }
   }
 
-  //          REGISTER METHOD
   static Future<Map<String, dynamic>?> register(
       String fullName, String email, String password) async {
     try {
@@ -67,7 +64,6 @@ class ApiService {
     }
   }
 
-  //      FETCH CURRENT USER
   static Future<User> fetchCurrentUser() async {
     if (_authToken == null) {
       throw Exception("User is not authenticated. Please log in.");
@@ -103,7 +99,6 @@ class ApiService {
     }
   }
 
-  // ✅ UPDATED: UPDATE USER PROFILE (Returns User object for state update)
   static Future<User?> updateUserProfile(
       String name, String email, XFile? profileImageXFile) async {
     if (_authToken == null) {
@@ -116,8 +111,7 @@ class ApiService {
       var request = http.MultipartRequest('POST', uri); 
 
       request.headers['Authorization'] = 'Bearer $_authToken';
-      
-      // Sending 'name' to match Laravel validation requirements
+    
       request.fields['name'] = name; 
       request.fields['email'] = email;
 
@@ -142,8 +136,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        
-        // 🎯 Return the fully updated User object from the API response
+
         return User.fromJson(responseData['user']);
       } 
       else if (response.statusCode == 422) {
@@ -159,7 +152,6 @@ class ApiService {
     }
   }
 
-  // NEW: CHANGE PASSWORD
   static Future<bool> changePassword(
       String currentPassword, String newPassword) async {
     if (_authToken == null) {
@@ -188,7 +180,6 @@ class ApiService {
     }
   }
 
-  // 🚨 MODIFIED: SUBMIT INCIDENT METHOD
   static Future<dynamic> submitIncident(Incident incident) async {
     try {
       final response = await http.post(
@@ -216,7 +207,6 @@ class ApiService {
     }
   }
 
-  // NEW: FETCH USER INCIDENTS
   static Future<List<Incident>> fetchUserIncidents() async {
     if (_authToken == null) {
       throw Exception("Authentication required to view incidents.");
@@ -251,7 +241,6 @@ class ApiService {
     }
   }
 
-  // NEW: GET SINGLE INCIDENT
   static Future<Incident?> getIncident(int id) async {
     try {
       final response = await http.get(
@@ -269,7 +258,6 @@ class ApiService {
     }
   }
 
-  // NEW: UPDATE INCIDENT
   static Future<bool> updateIncident(int id, Map<String, dynamic> data) async {
     try {
       final response = await http.put(
@@ -286,7 +274,6 @@ class ApiService {
     }
   }
 
-  // NEW: DELETE INCIDENT
   static Future<bool> deleteIncident(int id) async {
     try {
       final response = await http.delete(

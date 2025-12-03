@@ -9,7 +9,6 @@ class IncidentDetailScreen extends StatelessWidget {
 
   static const primaryColor = Color(0xFF2E7D32);
 
-  // Helper to build the main detail rows
   Widget _buildDetailRow(BuildContext context, String label, String value, {TextStyle? valueStyle}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
@@ -38,11 +37,9 @@ class IncidentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Format date and time
     final date = DateTime.tryParse(incident.dateOfIncident);
     final formattedDate = date != null ? DateFormat('MMM dd, yyyy').format(date) : 'N/A';
-    
-    // Check if a final action has been recorded
+
     final actionCompleted = incident.actionTaken != null && incident.actionTaken!.isNotEmpty;
 
     return Scaffold(
@@ -73,7 +70,6 @@ class IncidentDetailScreen extends StatelessWidget {
                     ),
                     const Divider(height: 30, thickness: 2),
 
-                    // Display key student information
                     _buildDetailRow(context, "Student Name", incident.fullName),
                     _buildDetailRow(context, "Student ID", incident.studentId),
                     _buildDetailRow(context, "Program", incident.program),
@@ -81,10 +77,8 @@ class IncidentDetailScreen extends StatelessWidget {
                     _buildDetailRow(context, "Section", incident.section),
                     const Divider(height: 30, thickness: 1),
 
-                    // Display incident specifics
                     _buildDetailRow(context, "Offense Category", incident.offenseCategory),
-                    
-                    // Specific Offense displayed immediately after Category
+
                     _buildDetailRow(context, "Specific Offense", incident.specificOffense, 
                         valueStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     
@@ -94,7 +88,6 @@ class IncidentDetailScreen extends StatelessWidget {
                     
                     const Divider(height: 30, thickness: 1),
 
-                    // Description
                     Text("Description:", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Text(
@@ -103,14 +96,10 @@ class IncidentDetailScreen extends StatelessWidget {
                     ),
                     
                     const SizedBox(height: 20),
-                    
-                    // =======================================================
-                    // RECOMMENDATION AND STATUS ROW
-                    // =======================================================
+
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        // Left Side: Recommendation
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,8 +116,7 @@ class IncidentDetailScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        
-                        // Right Side: Status 
+
                         Text(
                           "Status: ${incident.status.toUpperCase()}",
                           style: TextStyle(
@@ -139,17 +127,13 @@ class IncidentDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // =======================================================
                   ],
                 ),
               ),
             ),
             
             const SizedBox(height: 16),
-            
-            // =======================================================
-            // FINAL ACTION TAKEN BLOCK (CONDITIONAL)
-            // =======================================================
+
             if (actionCompleted)
               Card(
                 elevation: 2,
@@ -173,10 +157,9 @@ class IncidentDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            // =======================================================
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}

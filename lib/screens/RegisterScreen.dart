@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:misconductmobile/variables.dart';
-import 'loginpage.dart'; // Assuming this is the correct path for the login page
+import 'loginpage.dart'; 
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,7 +14,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for Full Name, Email, Password, and Confirmation
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -25,8 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordObscure = true;
   bool _isConfirmPasswordObscure = true;
 
-  // Primary color matching the login screen
-  static const primaryColor = Color(0xFF2E7D32); // Dark Green
+  static const primaryColor = Color(0xFF2E7D32); 
 
   @override
   void dispose() {
@@ -81,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('⚠️ Network Error: $e')));
+            SnackBar(content: Text('Network Error: $e')));
       }
     } finally {
       if (mounted) {
@@ -146,7 +144,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          // Background Gradient matching LoginScreen
           gradient: LinearGradient(
             colors: [Color(0xFF4CAF50), primaryColor],
             begin: Alignment.topCenter,
@@ -191,7 +188,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Full Name Field
                     _buildTextField(
                       controller: _nameController,
                       labelText: "Full Name",
@@ -201,7 +197,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Email Field
                     _buildTextField(
                       controller: _emailController,
                       labelText: "Email",
@@ -211,7 +206,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password Field
                     _buildTextField(
                       controller: _passwordController,
                       labelText: "Password",
@@ -230,7 +224,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Confirm Password Field
                     _buildTextField(
                       controller: _confirmPasswordController,
                       labelText: "Confirm Password",
@@ -250,7 +243,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 32),
 
-                    // Register Button or Loading Indicator
                     _isLoading
                         ? const CircularProgressIndicator(
                             valueColor:
@@ -279,7 +271,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Login Link
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(

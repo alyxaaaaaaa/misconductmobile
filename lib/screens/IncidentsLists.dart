@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 🎯 NEW: Import Provider
-import '../provider/incident_provider.dart'; // 🎯 NEW: Import your Provider
-// NOTE: ApiService import is no longer needed here, as the Provider handles the service call
+import 'package:provider/provider.dart'; 
+import '../provider/incident_provider.dart'; 
 import 'package:intl/intl.dart';
 import 'package:misconductmobile/screens/IncidentsDetails.dart'; 
 
@@ -13,35 +12,19 @@ class IncidentsList extends StatefulWidget {
 }
 
 class IncidentsListState extends State<IncidentsList> {
-  // Colors
   static const primaryColor = Color(0xFF2E7D32);
-  
-  // ❌ REMOVE: We no longer need a local Future, as the Provider holds the data.
-  // late Future<List<Incident>> _incidentsFuture;
 
   @override
   void initState() {
     super.initState();
-    // 🎯 INITIAL LOAD: Use Future.microtask to call loadIncidents after the build method is complete.
     Future.microtask(() => 
       Provider.of<IncidentProvider>(context, listen: false).loadIncidents()
     );
   }
 
-  // PUBLIC METHOD: Called by Dashboard to force a data refresh
   void refreshIncidents() {
-    // 🎯 REFRESH: Simply call the provider's load method.
     Provider.of<IncidentProvider>(context, listen: false).loadIncidents();
   }
-
-  // ❌ REMOVE: The service logic is now inside IncidentProvider.
-  // Future<List<Incident>> _fetchUserIncidents() async {
-  //   try {
-  //     return await ApiService.fetchUserIncidents();
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
 
   Widget _buildStatusChip(String status) {
     Color chipColor;
@@ -77,14 +60,9 @@ class IncidentsListState extends State<IncidentsList> {
 
   @override
   Widget build(BuildContext context) {
-    // 🎯 WATCH THE PROVIDER: The widget rebuilds whenever the provider calls notifyListeners()
     final incidentProvider = Provider.of<IncidentProvider>(context);
     final incidents = incidentProvider.incidents;
     final isLoading = incidentProvider.isLoading;
-
-    // A utility function to show the error if one occurred (not explicitly handled in provider yet, but good practice)
-    // Note: The original implementation didn't explicitly store errors, so we rely on the provider's state.
-    // However, the `RefreshIndicator` handles errors thrown by `onRefresh` nicely, so we'll use that.
 
     return Scaffold(
       appBar: AppBar(
@@ -92,13 +70,13 @@ class IncidentsListState extends State<IncidentsList> {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
-      // 🎯 ON REFRESH: Call the provider's method
+
       body: RefreshIndicator(
         onRefresh: incidentProvider.loadIncidents, 
         color: primaryColor,
         child: Container(
           padding: const EdgeInsets.only(top: 8.0),
-          // 🎯 BUILD WIDGETS BASED ON PROVIDER STATE, replacing FutureBuilder
+
           child: isLoading
               ? const Center(child: CircularProgressIndicator(color: primaryColor))
               : (incidents.isEmpty 
@@ -168,9 +146,9 @@ class IncidentsListState extends State<IncidentsList> {
                         );
                       },
                     )
-          ),
-        ),
-      ),
-    );
-  }
-}
+                  ),
+                ),
+              ),
+            );
+          }
+        }

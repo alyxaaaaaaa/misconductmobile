@@ -54,10 +54,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => EditProfileScreen(initialUser: _user!), 
       ),
     ).then((result) {
-      // Receive the User object directly after successful update
+
       if (result is User) {
         setState(() {
-          // Update local state immediately with the new User object (which contains the new image URL)
+
           _user = result;
         });
       }
@@ -80,7 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           TextButton(
             onPressed: () {
-              // Perform logout logic here (e.g., clearing tokens)
+
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const LoginScreen()), 
                 (Route<dynamic> route) => false,
@@ -126,17 +126,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final String? profileImagePath = _user?.profilePicturePath;
     final bool hasProfilePicture = profileImagePath != null && profileImagePath.isNotEmpty;
 
-    // --- FIX 1: Assemble the complete, cache-busting URL ---
     String? cacheBustingUrl;
     if (hasProfilePicture) {
       String fullPath = profileImagePath!;
 
-      // 🔑 Use the imported API_BASE_URL constant from variables.dart
+
       if (!fullPath.startsWith('http')) {
-        fullPath = baseUrl + fullPath; // Assumes your constant is named API_BASE_URL
+        fullPath = baseUrl + fullPath; 
       }
-      
-      // Append the cache-buster to force refresh
+    
       cacheBustingUrl = fullPath + '?v=${DateTime.now().millisecondsSinceEpoch}';
     }
 
@@ -144,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ? NetworkImage(cacheBustingUrl) 
       : null;
 
-    // --- FIX 2: Use a unique key to force the CircleAvatar to rebuild ---
     final Key avatarKey = hasProfilePicture 
       ? ValueKey('profile_image_$profileImagePath') 
       : const ValueKey('default_avatar'); 
@@ -182,11 +179,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Profile Avatar
                           GestureDetector(
                             onTap: _navigateToEditProfile, 
                             child: CircleAvatar(
-                              key: avatarKey, // 🔑 The key forces a redraw
+                              key: avatarKey, 
                               radius: 50,
                               backgroundColor: primaryColor.withOpacity(0.1),
                               backgroundImage: avatarImage, 
@@ -200,8 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
-                          // User Full Name (Headline)
+
                           Text(
                             _user?.fullName ?? 'Profile Missing',
                             textAlign: TextAlign.center,
@@ -227,7 +222,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           
                           const SizedBox(height: 24),
 
-                          // Edit Profile Button
                           if (isUserDataValid && !_isLoading)
                             Column(
                               children: [
@@ -249,7 +243,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                           
-                          // Logout Button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -266,9 +259,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         ],
                       ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+                  ),
+                ),
+              ),
+            );
+          }
+        }

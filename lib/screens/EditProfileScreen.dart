@@ -1,11 +1,8 @@
-// lib/screens/EditProfileScreen.dart
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; 
 import 'package:misconductmobile/services/api_service.dart';
 import 'package:misconductmobile/models/user.dart';
-
-// Assuming LoginPage and Incident models exist but are not included here for brevity.
 
 class EditProfileScreen extends StatefulWidget {
   final User initialUser;
@@ -61,7 +58,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // ✅ FIX: Receives the updated User object and passes it back
   Future<void> _updateProfile() async {
     if (!(_profileFormKey.currentState?.validate() ?? false)) return;
 
@@ -79,12 +75,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SnackBar(content: Text('Profile updated successfully!')),
             );
 
-            // Clear the local preview of the selected image
             setState(() {
                 _profileImageXFile = null;
             });
-            
-            // 🎯 PASS THE NEW USER OBJECT BACK TO THE PROFILE SCREEN
+
             Navigator.pop(context, newUserData); 
 
         } else if (mounted) {
@@ -108,15 +102,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showChangePasswordDialog() {
-    // ... (omitted for brevity)
+
   }
   Future<void> _changePassword() async {
-    // ... (omitted for brevity)
     if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
-    // Logic for password change...
     setState(() => _isLoading = false);
-    Navigator.pop(context, true); // Return true for password change success
+    Navigator.pop(context, true); 
   }
 
   @override
@@ -125,16 +117,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     ImageProvider? getProfileImageProvider() {
       if (_profileImageXFile != null) {
-        // Use FileImage for local preview
         return FileImage(File(_profileImageXFile!.path));
       } else if (widget.initialUser.profilePicturePath.isNotEmpty) {
-        // Use NetworkImage for existing picture
         return NetworkImage(widget.initialUser.profilePicturePath);
       }
       return null;
     }
 
-    // Determine if the current image source is network/file
     final bool isImageSet = getProfileImageProvider() != null; 
 
     return Scaffold(
@@ -162,7 +151,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Profile Picture Editor 🖼️
                     GestureDetector(
                       onTap: _pickImage,
                       child: CircleAvatar(
@@ -177,7 +165,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Name Field
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person)),
@@ -186,7 +173,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Email Field
                     TextFormField(
                        controller: _emailController,
                        decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
@@ -196,10 +182,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Change Password Button (omitted for brevity)
-                    // ... 
-
-                    // Save Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

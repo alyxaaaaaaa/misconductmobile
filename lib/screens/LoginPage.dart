@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:misconductmobile/services/api_service.dart';
 import 'package:misconductmobile/provider/user_provider.dart';
 import 'package:misconductmobile/screens/DashboardScreen.dart';
-import 'package:misconductmobile/screens/RegisterScreen.dart'; // Import Register screen
-
+import 'package:misconductmobile/screens/RegisterScreen.dart'; 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,7 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
 
   bool _loading = false;
-  bool _isObscure = true; // 1. <<< NEW STATE VARIABLE for password visibility
+  bool _isObscure = true; 
 
   void _handleLogin() async {
     setState(() => _loading = true);
@@ -29,13 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (user != null && mounted) {
       Provider.of<UserProvider>(context, listen: false).setUser(user);
 
-      // Navigate to Dashboard on successful login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } else {
-      // Show error message
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid login credentials.")),
       );
@@ -45,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    const primaryColor = Color(0xFF2E7D32); // Dark Green
+    const primaryColor = Color(0xFF2E7D32);
 
     return Scaffold(
       body: Container(
@@ -103,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _password,
-                    obscureText: _isObscure, // 2. <<< USE THE NEW STATE VARIABLE
+                    obscureText: _isObscure, 
                     decoration: InputDecoration(
                       labelText: "Password",
                       prefixIcon: const Icon(Icons.lock, color: primaryColor),
@@ -113,14 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-                      // 3. <<< ADD THE TOGGLE BUTTON HERE
+
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isObscure ? Icons.visibility : Icons.visibility_off,
                           color: primaryColor,
                         ),
                         onPressed: () {
-                          // 4. <<< TOGGLE THE STATE
+
                           setState(() {
                             _isObscure = !_isObscure;
                           });
@@ -129,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Login Button or Loading Indicator
+
                   _loading
                       ? const CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
@@ -155,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 24),
 
-                  // Register Link (The requested feature)
                   GestureDetector(
                     onTap: () {
                       Navigator.push(

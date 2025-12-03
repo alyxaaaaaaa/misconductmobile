@@ -16,10 +16,8 @@ class Incident {
 
   final String status;
   
-  // --- NEW FIELDS FOR DISCIPLINARY ACTION OPTIMIZATION ---
-  final String? recommendation; // System's suggested action
-  final String? actionTaken;    // Final action recorded by admin
-  // --------------------------------------------------------
+  final String? recommendation; 
+  final String? actionTaken;    
   
   final String? createdAt;
 

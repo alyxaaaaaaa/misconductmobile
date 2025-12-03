@@ -1,5 +1,3 @@
-// IncidentProvider.dart
-
 import 'package:flutter/material.dart';
 import '../models/incident.dart';
 import '../services/incident_service.dart';
@@ -10,37 +8,32 @@ class IncidentProvider with ChangeNotifier {
 
   final IncidentService _service = IncidentService();
 
-  Future<void> loadIncidents() async { // Made return type explicit
+  Future<void> loadIncidents() async {
     isLoading = true;
     notifyListeners();
 
     try {
-      // 🎯 RENAME 1: Use the new consolidated fetchIncidents()
       incidents = await _service.fetchIncidents(); 
     } catch (e) {
       print("Error loading incidents: $e");
-      // Optionally handle error state here
     }
     
     isLoading = false;
     notifyListeners();
   }
 
-  /// CREATE with return value (works with recommendation popup)
   Future<Map<String, dynamic>> createIncident(Incident incident) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      // 🎯 RENAME 2: Use the new clean createIncident()
       final response = await _service.createIncident(incident); 
 
-      // Reload the list to include the new incident
       await loadIncidents(); 
       isLoading = false;
       notifyListeners();
 
-      return response; // <-- RETURN to UI
+      return response; 
     } catch (e) {
       isLoading = false;
       notifyListeners();
