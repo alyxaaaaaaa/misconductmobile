@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:misconductmobile/services/api_service.dart';
-import 'package:misconductmobile/provider/user_provider.dart';
+import 'package:misconductmobile/providers/user_provider.dart';
 import 'package:misconductmobile/screens/DashboardScreen.dart';
-import 'package:misconductmobile/screens/RegisterScreen.dart'; 
+import 'package:misconductmobile/screens/RegisterScreen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -12,38 +13,55 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _password = TextEditingController();
 
   bool _loading = false;
-  bool _isObscure = true; 
+  bool _isObscure = true;
 
-  void _handleLogin() async {
+  /// Handles login process
+  Future<void> _handleLogin() async {
+    if (_email.text.isEmpty || _password.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email and password.")),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
-    final user = await ApiService.login(_email.text, _password.text);
+    try {
+      final user = await ApiService.login(_email.text.trim(), _password.text);
 
-    setState(() => _loading = false);
+      if (user != null) {
+        // Update UserProvider safely
+        Provider.of<UserProvider>(context, listen: false).setUser(user);
 
-    if (user != null && mounted) {
-      Provider.of<UserProvider>(context, listen: false).setUser(user);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    } else {
-
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      } else {
+        // Login failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid email or password.")),
+        );
+      }
+    } catch (e) {
+      print("Login error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid login credentials.")),
+        const SnackBar(content: Text("An error occurred. Please try again.")),
       );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
     const primaryColor = Color(0xFF2E7D32);
+    final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Container(
@@ -66,11 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
+                  BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -78,15 +92,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const Text(
                     "Hello, Welcome!",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColor,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: primaryColor),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _email,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: "Email",
                       prefixIcon: const Icon(Icons.email, color: primaryColor),
@@ -101,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _password,
-                    obscureText: _isObscure, 
+                    obscureText: _isObscure,
                     decoration: InputDecoration(
                       labelText: "Password",
                       prefixIcon: const Icon(Icons.lock, color: primaryColor),
@@ -111,27 +122,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isObscure ? Icons.visibility : Icons.visibility_off,
                           color: primaryColor,
                         ),
-                        onPressed: () {
-
-                          setState(() {
-                            _isObscure = !_isObscure;
-                          });
-                        },
+                        onPressed: () => setState(() => _isObscure = !_isObscure),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   _loading
-                      ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                        )
+                      ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primaryColor))
                       : SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -139,9 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               elevation: 5,
                             ),
                             child: const Text(
@@ -150,9 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                  
                   const SizedBox(height: 24),
-
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -162,10 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: RichText(
                       text: const TextSpan(
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.black54, fontSize: 16),
                         children: [
                           TextSpan(text: "Don't have an account? "),
                           TextSpan(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
-import '../provider/incident_provider.dart'; 
+import '../providers/incident_provider.dart'; 
 import 'package:intl/intl.dart';
 import 'package:misconductmobile/screens/IncidentsDetails.dart'; 
 
@@ -66,7 +66,7 @@ class IncidentsListState extends State<IncidentsList> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Filed Incidents"),
+        title: const Text("Incidents List"),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -128,7 +128,7 @@ class IncidentsListState extends State<IncidentsList> {
                                   style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
                                 ),
                                 const SizedBox(height: 2),
-                                Text('${incident.offenseCategory} - ID: ${incident.studentId}'),
+                                Text('${incident.offenseCategory}'),
                                 Text('Date: $formattedDate at ${incident.timeOfIncident}'),
                               ],
                             ),

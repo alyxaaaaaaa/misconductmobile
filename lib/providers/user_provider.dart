@@ -11,7 +11,7 @@ class UserProvider extends ChangeNotifier {
 
   void setUser(Map<String, dynamic> user) {
     _id = user['id'];
-    _name = user['fullName']; 
+    _name = user['fullName'];
     _email = user['email'];
     notifyListeners();
   }

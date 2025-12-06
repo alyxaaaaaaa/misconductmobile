@@ -22,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
-  final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
+  // final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
 
   XFile? _profileImageXFile; 
   bool _isLoading = false;
@@ -101,15 +101,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  void _showChangePasswordDialog() {
+  // void _showChangePasswordDialog() {
 
-  }
-  Future<void> _changePassword() async {
-    if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
-    setState(() => _isLoading = true);
-    setState(() => _isLoading = false);
-    Navigator.pop(context, true); 
-  }
+  // }
+  // Future<void> _changePassword() async {
+  //   if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
+  //   setState(() => _isLoading = true);
+  //   setState(() => _isLoading = false);
+  //   Navigator.pop(context, true); 
+  // }
 
   @override
   Widget build(BuildContext context) {
