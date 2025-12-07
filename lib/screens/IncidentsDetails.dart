@@ -7,7 +7,10 @@ class IncidentDetailScreen extends StatelessWidget {
 
   const IncidentDetailScreen({super.key, required this.incident});
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF2E7D32); // Dark green
+  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+  // =============================================================
 
   Widget _buildDetailRow(BuildContext context, String label, String value, {TextStyle? valueStyle}) {
     return Padding(
@@ -43,6 +46,9 @@ class IncidentDetailScreen extends StatelessWidget {
     final actionCompleted = incident.actionTaken != null && incident.actionTaken!.isNotEmpty;
 
     return Scaffold(
+      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
+      backgroundColor: lightGreenBackground,
+      // ========================================================================
       appBar: AppBar(
         title: const Text("Case Details"),
         backgroundColor: primaryColor,

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:misconductmobile/providers/student_provider.dart'; 
 import 'package:misconductmobile/providers/user_provider.dart';
 import 'package:misconductmobile/providers/incident_provider.dart'; 
-import 'package:misconductmobile/screens/LoginPage.dart'; 
+import 'package:misconductmobile/screens/LoginScreen.dart'; 
 
 // 1. Import the new DashboardStatsProvider
 import 'package:misconductmobile/providers/dashboard_stats_provider.dart'; 

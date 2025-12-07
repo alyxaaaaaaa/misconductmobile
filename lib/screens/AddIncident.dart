@@ -35,7 +35,10 @@ class _AddIncidentState extends State<AddIncident> {
 
   bool _loadingLocal = false;
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF2E7D32); // Dark green
+  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+  // =============================================================
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
 
   // Offense lists
@@ -149,7 +152,7 @@ class _AddIncidentState extends State<AddIncident> {
     }
 
     // Get providers using listen: false
-    final incidentProvider = Provider.of<IncidentProvider>(context, listen: false); 
+    final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);  
     final dashboardProvider = Provider.of<DashboardStatsProvider>(context, listen: false); // GET DASHBOARD PROVIDER
 
     setState(() => _loadingLocal = true);
@@ -381,6 +384,9 @@ class _AddIncidentState extends State<AddIncident> {
     final specificOffenses = _offenseType != null ? _offenseList[_offenseType] ?? [] : <String>[];
 
     return Scaffold(
+      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
+      backgroundColor: lightGreenBackground,
+      // ========================================================================
       appBar: AppBar(
         title: const Text("Add Incident"),
         backgroundColor: primaryColor,
@@ -423,9 +429,9 @@ class _AddIncidentState extends State<AddIncident> {
                           decoration: const InputDecoration(labelText: 'Select Student', border: InputBorder.none),
                           items: studentProv.students
                               .map((s) => DropdownMenuItem<Student>(
-                                      value: s,
-                                      child: Text('${s.fullName} — ${s.studentId}', overflow: TextOverflow.ellipsis),
-                                    ))
+                                          value: s,
+                                          child: Text('${s.fullName} — ${s.studentId}', overflow: TextOverflow.ellipsis),
+                                        ))
                               .toList(),
                           onChanged: _onStudentSelected,
                         ),
@@ -558,7 +564,7 @@ class _AddIncidentState extends State<AddIncident> {
         currentIndex: 2,
         onTap: (index) {
           // This navigation logic assumes the other screens are available in the navigator stack
-          if (index != 2) Navigator.pop(context); 
+          if (index != 2) Navigator.pop(context);  
         },
         backgroundColor: Colors.white,
         selectedItemColor: primaryColor,

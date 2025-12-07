@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io'; 
 import 'package:misconductmobile/services/api_service.dart';
 import 'package:misconductmobile/models/user.dart';
 
@@ -15,16 +13,18 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   static const primaryColor = Color(0xFF2E7D32);
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+
   final _profileFormKey = GlobalKey<FormState>(); 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
 
+  // NOTE: Password fields are still disposed, but currently not used in the UI/logic
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
-  // final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
 
-  XFile? _profileImageXFile; 
+  // XFile? _profileImageXFile; // REMOVED: No longer needed for Add Photo functionality
   bool _isLoading = false;
 
   @override
@@ -44,19 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70, 
-    );
-
-    if (image != null) {
-      setState(() {
-        _profileImageXFile = image;
-      });
-    }
-  }
+  // REMOVED: _pickImage method is no longer needed
 
   Future<void> _updateProfile() async {
     if (!(_profileFormKey.currentState?.validate() ?? false)) return;
@@ -67,7 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final User? newUserData = await ApiService.updateUserProfile(
             _nameController.text,
             _emailController.text,
-            _profileImageXFile, 
+            null, // Pass null as there is no image to update
         );
 
         if (newUserData != null && mounted) {
@@ -75,9 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SnackBar(content: Text('Profile updated successfully!')),
             );
 
-            setState(() {
-                _profileImageXFile = null;
-            });
+            // REMOVED: _profileImageXFile = null;
 
             Navigator.pop(context, newUserData); 
 
@@ -101,32 +87,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // void _showChangePasswordDialog() {
-
-  // }
-  // Future<void> _changePassword() async {
-  //   if (!(_passwordFormKey.currentState?.validate() ?? false)) return;
-  //   setState(() => _isLoading = true);
-  //   setState(() => _isLoading = false);
-  //   Navigator.pop(context, true); 
-  // }
-
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    ImageProvider? getProfileImageProvider() {
-      if (_profileImageXFile != null) {
-        return FileImage(File(_profileImageXFile!.path));
-      } else if (widget.initialUser.profilePicturePath.isNotEmpty) {
-        return NetworkImage(widget.initialUser.profilePicturePath);
-      }
-      return null;
-    }
-
-    final bool isImageSet = getProfileImageProvider() != null; 
+    // REMOVED: getProfileImageProvider function is no longer needed
+    // REMOVED: isImageSet bool is no longer needed
 
     return Scaffold(
+      backgroundColor: lightGreenBackground, // APPLYING lightGreenBackground
       appBar: AppBar(
         title: const Text("Edit Profile"),
         backgroundColor: primaryColor,
@@ -151,18 +120,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: primaryColor.withOpacity(0.1),
-                        backgroundImage: getProfileImageProvider(),
-                        
-                        child: isImageSet
-                            ? null
-                            : const Icon(Icons.camera_alt, size: 40, color: primaryColor),
-                      ),
+                    // === MODIFICATION 2: PROFILE PHOTO WIDGET MODIFIED ===
+                    // Kept the circle avatar but removed the GestureDetector and image logic
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: primaryColor.withOpacity(0.1),
+                      // Only display the network image if a path exists
+                      backgroundImage: widget.initialUser.profilePicturePath.isNotEmpty
+                          ? NetworkImage(widget.initialUser.profilePicturePath)
+                          : null,
+                      child: widget.initialUser.profilePicturePath.isEmpty
+                          ? const Icon(Icons.person, size: 60, color: primaryColor)
+                          : null,
                     ),
+                    // ====================================================
                     const SizedBox(height: 20),
                     
                     TextFormField(
@@ -173,13 +144,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    // === MODIFICATION 3: EMAIL FIELD MADE NON-EDITABLE (ENABLED: FALSE) ===
                     TextFormField(
                        controller: _emailController,
-                       decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                       decoration: InputDecoration(
+                         labelText: 'Email (Not editable)', 
+                         prefixIcon: const Icon(Icons.email),
+                         // Add a subtle color to indicate it's disabled
+                         fillColor: lightGreenBackground.withOpacity(0.5), 
+                         filled: true,
+                       ),
                        keyboardType: TextInputType.emailAddress,
-                       style: const TextStyle(fontSize: 18),
-                       validator: (value) => !value!.contains('@') ? 'Enter a valid email' : null,
+                       style: const TextStyle(fontSize: 18, color: Colors.grey),
+                       enabled: false, // Prevents editing
+                       // No need for validator since it can't be changed
                     ),
+                    // ====================================================================
                     const SizedBox(height: 30),
 
                     SizedBox(

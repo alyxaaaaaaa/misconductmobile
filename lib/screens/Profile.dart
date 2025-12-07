@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:misconductmobile/screens/LoginPage.dart'; 
+import 'package:misconductmobile/screens/LoginScreen.dart'; 
 import 'package:misconductmobile/models/user.dart';
 import 'package:misconductmobile/services/api_service.dart'; 
-import 'package:misconductmobile/screens/EditProfileScreen.dart'; 
+import 'package:misconductmobile/screens/EditProfile.dart'; 
 import 'package:misconductmobile/variables.dart'; 
 
 class ProfileScreen extends StatefulWidget {
@@ -13,7 +13,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF2E7D32); // Dark green
+  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+  // =============================================================
   User? _user;
   bool _isLoading = true;
   String? _errorMessage;
@@ -128,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     String? cacheBustingUrl;
     if (hasProfilePicture) {
-      String fullPath = profileImagePath!;
+      String fullPath = profileImagePath;
 
 
       if (!fullPath.startsWith('http')) {
@@ -148,6 +151,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
     return Scaffold(
+      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
+      backgroundColor: lightGreenBackground,
+      // ========================================================================
       appBar: AppBar(
         title: const Text("User Profile"),
         backgroundColor: primaryColor,
@@ -192,7 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         isUserDataValid ? Icons.person_rounded : Icons.error_outline,
                                         size: 60,
                                         color: isUserDataValid ? primaryColor : Colors.red,
-                                  ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -259,9 +265,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         ],
                       ),
-                  ),
-                ),
-              ),
-            );
-          }
-        }
+            ),
+          ),
+        ),
+      );
+  }
+}

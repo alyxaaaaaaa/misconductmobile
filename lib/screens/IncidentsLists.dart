@@ -12,7 +12,10 @@ class IncidentsList extends StatefulWidget {
 }
 
 class IncidentsListState extends State<IncidentsList> {
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF2E7D32); // Dark green
+  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+  // =============================================================
 
   @override
   void initState() {
@@ -65,6 +68,9 @@ class IncidentsListState extends State<IncidentsList> {
     final isLoading = incidentProvider.isLoading;
 
     return Scaffold(
+      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
+      backgroundColor: lightGreenBackground,
+      // ========================================================================
       appBar: AppBar(
         title: const Text("Incidents List"),
         backgroundColor: primaryColor,
@@ -146,9 +152,9 @@ class IncidentsListState extends State<IncidentsList> {
                         );
                       },
                     )
-                  ),
-                ),
               ),
-            );
-          }
-        }
+            ),
+          ),
+        );
+      }
+    }

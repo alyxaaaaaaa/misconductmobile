@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:misconductmobile/screens/ProfilePage.dart';
+import 'package:misconductmobile/screens/Profile.dart';
 import 'package:misconductmobile/screens/AddIncident.dart';
 import 'package:misconductmobile/screens/IncidentsLists.dart';
-import 'package:misconductmobile/screens/Dashboard.dart';
+import 'package:misconductmobile/screens/DashboardContents.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,7 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
 
     _screens = [
-       DashboardPageContent(),
+      const DashboardPage(),
       const IncidentsList(),
       const ProfileScreen(),
     ];
@@ -84,7 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Incidents List',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle, size: 25),
+            icon: Icon(Icons.add_circle, size: 23.5),
             label: 'Add Incident',
           ),
           BottomNavigationBarItem(
