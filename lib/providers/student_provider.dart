@@ -1,11 +1,9 @@
-// lib/providers/student_provider.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/student.dart';
 import '../variables.dart';
-import '../services/api_service.dart'; // Make sure this path is correct
+import '../services/api_service.dart'; 
 
 class StudentProvider extends ChangeNotifier {
   final String apiBaseUrl = baseUrl;
@@ -18,7 +16,6 @@ class StudentProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
 
-  /// Fetch students for dropdown
   Future<void> fetchStudentsForDropdown() async {
     if (_loading) return;
     _loading = true;
@@ -26,7 +23,6 @@ class StudentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Use token from ApiService
       final token = ApiService.getAuthToken() ?? '';
 
       if (token.isEmpty) {

@@ -11,32 +11,27 @@ class ApiService {
   static String? _authToken;
   static const String _tokenKey = 'auth_token';
 
-  /// Initialize token from storage
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString(_tokenKey);
     print('Service initialized. Loaded token: ${_authToken != null ? "Yes" : "No"}');
   }
-
-  /// Save token persistently
   static Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     _authToken = token;
-    print('🔑 Token saved to storage!');
+    print('Token saved to storage!');
   }
 
-  /// Remove token
   static Future<void> _clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     _authToken = null;
-    print('🔑 Token removed from storage!');
+    print('Token removed from storage!');
   }
 
   static String? getAuthToken() => _authToken;
 
-  // LOGIN
   static Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -58,10 +53,8 @@ class ApiService {
     }
   }
 
-  // LOGOUT
   static Future<void> logout() async => _clearToken();
 
-  // REGISTER
   static Future<Map<String, dynamic>?> register(String fullName, String email, String password) async {
     try {
       final response = await http.post(
@@ -83,7 +76,6 @@ class ApiService {
     }
   }
 
-  // FETCH CURRENT USER
   static Future<User> fetchCurrentUser() async {
     if (_authToken == null) throw Exception("User not authenticated.");
     final response = await http.get(
@@ -98,8 +90,6 @@ class ApiService {
       throw Exception("Failed to fetch user: ${response.statusCode}");
     }
   }
-
-  // UPDATE PROFILE
   static Future<User?> updateUserProfile(String name, String email, XFile? profileImage) async {
     if (_authToken == null) return null;
     try {
@@ -138,7 +128,6 @@ class ApiService {
     }
   }
 
-  // CHANGE PASSWORD
   static Future<bool> changePassword(String currentPassword, String newPassword) async {
     if (_authToken == null) return false;
     try {
@@ -158,7 +147,6 @@ class ApiService {
     }
   }
 
-  // INCIDENTS
   static Future<bool> submitIncident(Incident incident) async {
     try {
       final response = await http.post(
@@ -237,13 +225,11 @@ class ApiService {
     }
   }
 
-  // In ApiService
-
   static Future<List<dynamic>> fetchIncidentStats() async {
     if (_authToken == null) throw Exception("Authentication required.");
 
     final response = await http.get(
-      Uri.parse("$baseUrl/stats/monthly-misconduct"), // or your actual URL
+      Uri.parse("$baseUrl/stats/monthly-misconduct"), 
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $_authToken",
@@ -252,7 +238,6 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      // data is a List, so just return it
       if (data is List) {
         return data;
       } else {
@@ -262,16 +247,11 @@ class ApiService {
       throw Exception("Failed to fetch incident stats: ${response.statusCode}");
     }
   }
-
-  // ... (The rest of your ApiService class)
-
-    /// NEW METHOD: Fetches misconduct counts grouped by program/course.
-    /// The API returns a map where keys are program names and values are counts.
     static Future<Map<String, int>> fetchMisconductPerProgram() async {
         if (_authToken == null) throw Exception("Authentication required.");
 
         final response = await http.get(
-            Uri.parse("$baseUrl/admin/stats/misconduct-per-program"), // Assumes this is the correct endpoint from the backend logic
+            Uri.parse("$baseUrl/admin/stats/misconduct-per-program"),
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer $_authToken",
@@ -281,7 +261,6 @@ class ApiService {
         if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
             if (data is Map) {
-                // Convert Map<String, dynamic> to Map<String, int>
                 return data.map((key, value) => MapEntry(key.toString(), (value as num).toInt()));
             } else {
                 throw Exception("Expected a map but got: ${data.runtimeType}");
@@ -291,5 +270,4 @@ class ApiService {
         }
     }
 
-// ... (The rest of your ApiService class)
 }

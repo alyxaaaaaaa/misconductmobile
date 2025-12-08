@@ -12,19 +12,16 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  static const primaryColor = Color(0xFF2E7D32);
-  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
+  static const primaryColor = Color(0xFF84BE78);
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); 
 
   final _profileFormKey = GlobalKey<FormState>(); 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-
-  // NOTE: Password fields are still disposed, but currently not used in the UI/logic
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmNewPasswordController = TextEditingController();
 
-  // XFile? _profileImageXFile; // REMOVED: No longer needed for Add Photo functionality
   bool _isLoading = false;
 
   @override
@@ -44,8 +41,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  // REMOVED: _pickImage method is no longer needed
-
   Future<void> _updateProfile() async {
     if (!(_profileFormKey.currentState?.validate() ?? false)) return;
 
@@ -55,15 +50,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final User? newUserData = await ApiService.updateUserProfile(
             _nameController.text,
             _emailController.text,
-            null, // Pass null as there is no image to update
+            null, 
         );
 
         if (newUserData != null && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Profile updated successfully!')),
             );
-
-            // REMOVED: _profileImageXFile = null;
 
             Navigator.pop(context, newUserData); 
 
@@ -137,22 +130,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // === MODIFICATION 3: EMAIL FIELD MADE NON-EDITABLE (ENABLED: FALSE) ===
                     TextFormField(
                        controller: _emailController,
                        decoration: InputDecoration(
                          labelText: 'Email (Not editable)', 
                          prefixIcon: const Icon(Icons.email),
-                         // Add a subtle color to indicate it's disabled
                          fillColor: lightGreenBackground.withOpacity(0.5), 
                          filled: true,
                        ),
                        keyboardType: TextInputType.emailAddress,
                        style: const TextStyle(fontSize: 18, color: Colors.grey),
-                       enabled: false, // Prevents editing
-                       // No need for validator since it can't be changed
+                       enabled: false, 
                     ),
-                    // ====================================================================
                     const SizedBox(height: 30),
 
                     SizedBox(

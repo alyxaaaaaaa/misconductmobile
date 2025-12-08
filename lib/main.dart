@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:misconductmobile/providers/student_provider.dart'; 
 import 'package:misconductmobile/providers/user_provider.dart';
 import 'package:misconductmobile/providers/incident_provider.dart'; 
-import 'package:misconductmobile/screens/LoginScreen.dart'; 
-
-// 1. Import the new DashboardStatsProvider
+import 'package:misconductmobile/screens/LoginScreen.dart';
 import 'package:misconductmobile/providers/dashboard_stats_provider.dart'; 
 
 void main() {
@@ -15,8 +13,6 @@ void main() {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => IncidentProvider()), 
-        
-        // 2. Add the DashboardStatsProvider here
         ChangeNotifierProvider(create: (_) => DashboardStatsProvider()),
       ],
       child: const MyApp(),
@@ -32,7 +28,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SMRMS',
-      // The app correctly starts on the LoginScreen
       home: LoginScreen(), 
     );
   }

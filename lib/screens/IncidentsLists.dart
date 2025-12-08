@@ -13,7 +13,7 @@ class IncidentsList extends StatefulWidget {
 }
 
 class IncidentsListState extends State<IncidentsList> {
-  static const primaryColor = Color(0xFF2E7D32); 
+  static const primaryColor = Color(0xFF84BE78); 
   static const Color lightGreenBackground = Color(0xFFE8F5E9);
 
   @override
@@ -24,7 +24,6 @@ class IncidentsListState extends State<IncidentsList> {
     );
   }
 
-  // Remove seconds (HH:MM:SS → HH:MM)
   String _formatTime(String timeString) {
     if (timeString.contains(":")) {
       final parts = timeString.split(':');
@@ -111,10 +110,8 @@ class IncidentsListState extends State<IncidentsList> {
                             );
 
                             if (result == true) {
-                              // Refresh incident list
                               await Provider.of<IncidentProvider>(context, listen: false).loadIncidents();
 
-                              // Refresh dashboard stats
                               await Provider.of<DashboardStatsProvider>(context, listen: false).fetchAllStats();
                             }
                           },

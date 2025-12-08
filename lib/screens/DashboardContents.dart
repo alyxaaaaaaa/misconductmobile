@@ -7,7 +7,7 @@ import 'dart:math';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-  static const Color primaryColor = Color(0xFF2E7D32); // Dark green
+  static const Color primaryColor = Color(0xFF84BE78); 
   static const Color lightGreenBackground = Color(0xFFE8F5E9);
   static const Color mediumGreen = Color(0xFF66BB6A);
   static const Color cardShadowGreen = Color(0xFF81C784);
@@ -36,7 +36,6 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    // Assumes UserProvider has a 'name' property
     final userName = userProvider.name ?? 'User'; 
 
     return Scaffold(
@@ -81,7 +80,6 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              // Wrap the stats section in a Consumer to auto-update
               Consumer<DashboardStatsProvider>(
                 builder: (context, provider, child) {
                   final isLoading = provider.isLoadingStats;
@@ -165,7 +163,6 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Horizontal program chart wrapped inside a Consumer
   Widget _buildProgramChartHorizontal(
       DashboardStatsProvider provider, BuildContext context) {
     final isProgramDataLoading = provider.isProgramDataLoading;

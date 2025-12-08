@@ -3,15 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:misconductmobile/models/incident.dart';
 import 'package:misconductmobile/providers/incident_provider.dart';
-import 'package:misconductmobile/providers/dashboard_stats_provider.dart'; // 🎯 Added import for the Dashboard provider
-import 'EditIncident.dart'; // Assuming this file and class exist
+import 'package:misconductmobile/providers/dashboard_stats_provider.dart'; 
+import 'EditIncident.dart'; 
 
 class IncidentDetailScreen extends StatefulWidget {
   final Incident incident;
 
   const IncidentDetailScreen({super.key, required this.incident});
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF84BE78);
   static const Color lightGreenBackground = Color(0xFFE8F5E9);
 
   @override
@@ -19,13 +19,11 @@ class IncidentDetailScreen extends StatefulWidget {
 }
 
 class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
-  // Current state of the incident, fetched fresh from API
   Incident? _currentIncident;
 
   bool _isLoadingDetails = true;
   bool _isDeleting = false;
 
-  // DEFINITIVE TIME HELPER: Ensures HH:MM format by padding and stripping seconds.
   String _formatTime(String timeString) {
     if (timeString.isEmpty) return '00:00';
 
@@ -43,10 +41,8 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     return timeString;
   }
 
-  // === Method to fetch the complete incident details ===
   Future<void> _fetchIncidentDetails() async {
       if (widget.incident.incidentId == null) {
-          // Fallback to partial data if ID is missing
           setState(() {
               _isLoadingDetails = false;
               _currentIncident = widget.incident.copyWith(
@@ -59,10 +55,8 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
       try {
           final provider = Provider.of<IncidentProvider>(context, listen: false);
 
-          // Fetches the full incident object from the backend
           final fetchedIncident = await provider.fetchIncidentById(widget.incident.incidentId!);
 
-          // Normalize time of the fetched incident before setting state
           final normalizedIncident = fetchedIncident.copyWith(
               timeOfIncident: _formatTime(fetchedIncident.timeOfIncident),
           );
@@ -73,7 +67,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
           });
       } catch (e) {
           print("Error fetching full incident details: $e");
-          // Fallback to the partial incident passed by the previous screen
           setState(() {
               _currentIncident = widget.incident.copyWith(
                   timeOfIncident: _formatTime(widget.incident.timeOfIncident),
@@ -90,7 +83,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Start fetching the full details immediately
     _fetchIncidentDetails();
   }
 
@@ -128,7 +120,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     );
   }
 
-  /// 🔄 Navigate to Edit Screen
   void _navigateToEditScreen() async {
       if (_currentIncident == null) return;
     final result = await Navigator.push(
@@ -140,12 +131,10 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     );
 
     if (result != null && result is Incident) {
-        // Since editing was successful, trigger a re-fetch for the latest data
         _fetchIncidentDetails();
     }
   }
 
-  /// 📌 Confirm delete dialog
   Future<void> _confirmAndDelete() async {
       if (_currentIncident == null) return;
     final bool confirm = await showDialog(
@@ -183,24 +172,18 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     }
   }
 
-  /// 🗑 Delete function - CONTAINS THE FIX
   Future<void> _deleteIncident() async {
     if (!mounted || _currentIncident == null) return;
 
     setState(() => _isDeleting = true);
 
     try {
-      // 1. Get the IncidentProvider to perform the deletion.
       final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);
       
-      // 2. 🎯 Get the DashboardStatsProvider instance (needed for UI metric refresh)
       final dashboardProvider = Provider.of<DashboardStatsProvider>(context, listen: false);
 
-      // 3. Perform the deletion (IncidentProvider handles backend update and local list refresh)
       await incidentProvider.deleteIncident(_currentIncident!);
-      
-      // 4. 🎯 CRITICAL FIX: Trigger the DashboardStatsProvider to refetch its metrics
-      // This ensures the numbers shown on the Dashboard UI are immediately updated.
+
       await dashboardProvider.fetchAllStats();
 
       if (!mounted) return;
@@ -214,7 +197,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         ),
       );
 
-      // 5. Pop with 'true' to indicate success/need for a list refresh.
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
@@ -235,7 +217,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   @override
   Widget build(BuildContext context) {
 
-    // Handle Loading State
     if (_isLoadingDetails || _currentIncident == null) {
         return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(IncidentDetailScreen.primaryColor)));
     }
@@ -251,7 +232,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     final actionCompleted = _currentIncident!.actionTaken != null &&
         _currentIncident!.actionTaken!.isNotEmpty;
 
-    // Determine if the action taken is DIFFERENT from the initial recommendation
     final isActionDifferentFromRecommendation = actionCompleted &&
         (_currentIncident!.actionTaken != (_currentIncident!.recommendation ?? ''));
 
@@ -268,9 +248,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// =============================
-            /// MAIN INFORMATION CARD
-            /// =============================
+ 
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
@@ -294,15 +272,13 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
                     const Divider(height: 30, thickness: 2),
 
-                    // --- IDENTITY AND ACADEMIC DETAILS ---
                     _buildDetailRow(
                         context, "Student Name", _currentIncident!.fullName),
                     _buildDetailRow(
                         context, "Student ID", _currentIncident!.studentId),
 
-                    const Divider(height: 10, thickness: 1), // Minor separator
+                    const Divider(height: 10, thickness: 1), 
 
-                    // FETCHED FIELDS (Program, Year Level, Section)
                     _buildDetailRow(
                         context, "Program", _currentIncident!.program),
                     _buildDetailRow(
@@ -312,7 +288,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
                     const Divider(height: 30, thickness: 1),
 
-                    // --- OFFENSE DETAILS ---
                     _buildDetailRow(context, "Offense Category",
                         _currentIncident!.offenseCategory),
                     _buildDetailRow(context, "Specific Offense",
@@ -320,8 +295,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                         valueStyle: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
 
-                    const Divider(height: 10, thickness: 1), // Minor separator
-
+                    const Divider(height: 10, thickness: 1), 
                     _buildDetailRow(
                         context, "Date of Incident", formattedDate),
                     _buildDetailRow(context, "Time of Incident",
@@ -331,7 +305,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
                     const Divider(height: 30, thickness: 1),
 
-                    // --- DESCRIPTION ---
                     Text(
                       "Description:",
                       style: Theme.of(context)
@@ -347,7 +320,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
                     const SizedBox(height: 20),
 
-                    /// System Recommendation + Status
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -401,16 +373,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
             const SizedBox(height: 12),
 
-            /// =============================
-            /// EDIT & DELETE BUTTONS
-            /// =============================
             Row(
               children: [
-                /// EDIT BUTTON
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed:
-                        _isDeleting ? null : _navigateToEditScreen, // disable
+                        _isDeleting ? null : _navigateToEditScreen,
                     icon: const Icon(Icons.edit, color: Colors.white),
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
@@ -426,7 +394,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
                 const SizedBox(width: 16),
 
-                /// DELETE BUTTON
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _isDeleting ? null : _confirmAndDelete,
@@ -457,9 +424,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
             const SizedBox(height: 12),
 
-            /// =============================
-            /// FINAL ACTION TAKEN CARD (IF DIFFERENT FROM RECOMMENDATION)
-            /// =============================
             if (isActionDifferentFromRecommendation)
               Card(
                 elevation: 2,

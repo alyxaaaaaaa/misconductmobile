@@ -24,7 +24,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordObscure = true;
   bool _isConfirmPasswordObscure = true;
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF84BE78);
+  static const backgroundColor = Color(0xFF84BE78); 
   static const String allowedSpecialCharacters = r'!@#$%^&*()_+=-`~?/<>,.:;[]{}|';
 
   @override
@@ -43,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'uppercase': false,
         'lowercase': false,
         'number': false,
-        'special_char': false, 
+        'special_char': false,
         'no_spaces': false,
       };
     }
@@ -55,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'uppercase': password.contains(RegExp(r'[A-Z]')),
       'lowercase': password.contains(RegExp(r'[a-z]')),
       'number': password.contains(RegExp(r'[0-9]')),
-      'special_char': password.contains(specialCharRegExp), 
+      'special_char': password.contains(specialCharRegExp),
       'no_spaces': !password.contains(' '),
     };
   }
@@ -66,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final validation = _getPasswordValidation(value);
-    
+
     final allValid = validation.values.every((isValid) => isValid);
 
     if (!allValid) {
@@ -75,7 +76,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return null;
   }
-  // ===============================================
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -101,8 +101,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Registration successful! Please login.')),
+              const SnackBar(
+                  content: Text('Registration successful! Please login.')),
           );
           Navigator.pushReplacement(
             context,
@@ -188,7 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final validation = _getPasswordValidation(password);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -243,173 +243,162 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-  // ===============================================
+
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/BG.png'),
-            fit: BoxFit.fill,
-          ),
-        ),
-        child: Container(
-          color: Colors.black.withOpacity(0.2),
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 32),
-                  width: width * 0.9,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+
+      backgroundColor: backgroundColor,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24, vertical: 32),
+              width: width * 0.9,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.95), 
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Create Your Account",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Register to start reporting incidents.",
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 30),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Create Your Account",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Register to start reporting incidents.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 30),
 
-                      _buildTextField(
-                        controller: _nameController,
-                        labelText: "Full Name",
-                        icon: Icons.person,
-                        validator: (value) =>
-                            value!.isEmpty ? "Full Name is required" : null,
-                      ),
-                      const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _nameController,
+                    labelText: "Full Name",
+                    icon: Icons.person,
+                    validator: (value) =>
+                        value!.isEmpty ? "Full Name is required" : null,
+                  ),
+                  const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _emailController,
-                        labelText: "Email",
-                        icon: Icons.email,
-                        validator: (value) =>
-                            value!.isEmpty ? "Email is required" : null,
-                      ),
-                      const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _emailController,
+                    labelText: "Email",
+                    icon: Icons.email,
+                    validator: (value) =>
+                        value!.isEmpty ? "Email is required" : null,
+                  ),
+                  const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _passwordController,
-                        labelText: "Password",
-                        icon: Icons.lock,
-                        obscureText: _isPasswordObscure,
-                        isPassword: true,
-                        validator: _validatePassword,
-                      ),
-                      
-                      _buildPasswordChecklist(_passwordController.text),
+                  _buildTextField(
+                    controller: _passwordController,
+                    labelText: "Password",
+                    icon: Icons.lock,
+                    obscureText: _isPasswordObscure,
+                    isPassword: true,
+                    validator: _validatePassword,
+                  ),
+                  
+                  _buildPasswordChecklist(_passwordController.text),
 
-                      const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _confirmPasswordController,
-                        labelText: "Confirm Password",
-                        icon: Icons.lock_open,
-                        obscureText: _isConfirmPasswordObscure,
-                        isConfirmPassword: true,
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Confirmation is required";
-                          }
-                          if (value != _passwordController.text) {
-                            return "Passwords do not match";
-                          }
-                          return null;
-                        },
-                      ),
+                  _buildTextField(
+                    controller: _confirmPasswordController,
+                    labelText: "Confirm Password",
+                    icon: Icons.lock_open,
+                    obscureText: _isConfirmPasswordObscure,
+                    isConfirmPassword: true,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return "Confirmation is required";
+                      }
+                      if (value != _passwordController.text) {
+                        return "Passwords do not match";
+                      }
+                      return null;
+                    },
+                  ),
 
-                      const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-                      _isLoading
-                          ? const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  primaryColor),
-                            )
-                          : SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _register,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 5,
+                  _isLoading
+                      ? const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                primaryColor),
+                          )
+                      : SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Text(
-                                  "Register",
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white),
-                                ),
+                                elevation: 5,
                               ),
-                            ),
-
-                      const SizedBox(height: 24),
-
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                          );
-                        },
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 16,
-                            ),
-                            children: [
-                              TextSpan(
-                                  text: "Already have an account? "),
-                              TextSpan(
-                                text: "Login here",
+                              child: const Text(
+                                "Register",
                                 style: TextStyle(
-                                  color: primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
+                                    fontSize: 18, color: Colors.white),
                               ),
-                            ],
+                            ),
                           ),
+
+                  const SizedBox(height: 24),
+
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LoginScreen(),
                         ),
+                      );
+                    },
+                    child: RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
+                        ),
+                        children: [
+                          TextSpan(
+                              text: "Already have an account? "),
+                          TextSpan(
+                            text: "Login here",
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),

@@ -13,7 +13,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const primaryColor = Color(0xFF2E7D32); 
+  static const primaryColor = Color(0xFF84BE78); 
 
   static const Color lightGreenBackground = Color(0xFFE8F5E9); 
 
@@ -254,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               icon: const Icon(Icons.logout, color: Colors.white),
                               label: const Text("LOGOUT", style: TextStyle(color: Colors.white)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFD32F2F),
+                                backgroundColor: const Color.fromARGB(255, 241, 121, 121),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 5,

@@ -14,7 +14,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF84BE78);
 
   late final List<Widget> _screens;
 

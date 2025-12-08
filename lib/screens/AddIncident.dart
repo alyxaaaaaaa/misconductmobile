@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-// Assuming these paths are correct relative to this file
 import '../providers/student_provider.dart';
 import '../providers/incident_provider.dart';
 import '../providers/dashboard_stats_provider.dart'; 
@@ -18,10 +17,8 @@ class AddIncident extends StatefulWidget {
 }
 
 class _AddIncidentState extends State<AddIncident> {
-  // CRITICAL: Hold the Student object directly.
   Student? _selectedStudent; 
-  
-  // Text controllers are only for display (enabled: false) or manual input
+
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
   final _section = TextEditingController();
@@ -38,11 +35,10 @@ class _AddIncidentState extends State<AddIncident> {
 
   bool _loadingLocal = false;
 
-  static const primaryColor = Color(0xFF2E7D32); 
+  static const primaryColor = Color(0xFF84BE78); 
   static const Color lightGreenBackground = Color(0xFFE8F5E9); 
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
 
-  // Offense lists (Remain as static data)
   static const Map<String, List<String>> _offenseList = {
     "Minor Offense": [
       "Failure to wear uniform",
@@ -84,16 +80,13 @@ class _AddIncidentState extends State<AddIncident> {
       _selectedStudent = s; 
 
       if (s != null) {
-        // Use student.studentId (the student number string) for display
         _studentId.text = s.studentId; 
         _fullName.text = s.fullName;
         
-        // Use properties from the selected object for autofill
         _program = s.program_code;
         _yearLevel = s.year_level;
         _section.text = s.section;
       } else {
-        // Clear all fields if selection is null
         _studentId.clear();
         _fullName.clear();
         _program = null;
@@ -106,7 +99,6 @@ class _AddIncidentState extends State<AddIncident> {
   String _formatBackendErrors(Map<String, dynamic> errors) {
     String errorMessage = 'Please correct the following issues:\n';
     
-    // Check for general student ID errors first
     if (errors.containsKey('studentId') && errors['studentId'] is List && errors['studentId'].isNotEmpty) {
       if (errors['studentId'][0].toString().contains('invalid') || errors['studentId'][0].toString().contains('exist')) {
         errorMessage += '• Student Record Not Found: The Student ID Number is not registered.\n';
@@ -116,7 +108,6 @@ class _AddIncidentState extends State<AddIncident> {
       errors.remove('studentId');
     }
     
-    // Iterate through other errors
     errors.forEach((key, value) {
       if (value is List && value.isNotEmpty) {
         final formattedKey = key.replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}')
@@ -129,14 +120,13 @@ class _AddIncidentState extends State<AddIncident> {
   }
 
   Future<void> _submit() async {
-    // 🔑 CONSOLIDATED VALIDATION FIX: Check all fields that Laravel requires
     if (_incidentDate == null ||
         _incidentTime == null ||
-        _offenseType == null ||      // Required by Laravel
-        _specificOffense == null ||  // Required by Laravel
+        _offenseType == null ||      
+        _specificOffense == null ||  
         _selectedStudent == null || 
         _location.text.isEmpty ||
-        _description.text.isEmpty) { // Assuming Description is also required
+        _description.text.isEmpty) { 
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill out all required fields."), backgroundColor: Colors.orange),
@@ -144,7 +134,6 @@ class _AddIncidentState extends State<AddIncident> {
       return;
     }
 
-    // Helper map for converting string names to mock integer IDs required by the backend
     final offenseIdMap = {
         'Minor Offense': 1, 'Major Offense': 2, 
         'Failure to wear uniform': 1, 'Pornographic materials': 2, 'Littering': 3, 'Loitering': 4,
@@ -178,7 +167,6 @@ class _AddIncidentState extends State<AddIncident> {
 
     final formattedTime = DateFormat('HH:mm').format(incidentDateTime);
 
-    // CRITICAL: Build the payload using the unique student number and valid fields
     final incident = Incident(
       studentId: _selectedStudent!.studentId, 
       fullName: _selectedStudent!.fullName,
@@ -186,10 +174,10 @@ class _AddIncidentState extends State<AddIncident> {
       yearLevel: _yearLevel ?? '',
       section: _section.text,
       dateOfIncident: _incidentDate!.toIso8601String().split('T').first,
-      timeOfIncident: formattedTime, // Now guaranteed to be non-null and formatted
+      timeOfIncident: formattedTime, 
       location: _location.text,
-      offenseCategory: _offenseType ?? '', // Now guaranteed non-null
-      specificOffense: _specificOffense ?? '', // Now guaranteed non-null
+      offenseCategory: _offenseType ?? '', 
+      specificOffense: _specificOffense ?? '', 
       description: _description.text,
       status: 'Pending',
       recommendation: null,
@@ -231,7 +219,6 @@ class _AddIncidentState extends State<AddIncident> {
             return;
           }
         } catch (_) {
-          // fall through to general error
         }
       }
 
@@ -244,7 +231,6 @@ class _AddIncidentState extends State<AddIncident> {
   }
 
   void _showRecommendationDialog(BuildContext context, String recommendation, Incident filedIncident) {
-    // clear fields upon successful submission
     _studentId.clear();
     _fullName.clear();
     _section.clear();
@@ -257,7 +243,7 @@ class _AddIncidentState extends State<AddIncident> {
       _specificOffense = null;
       _program = null;
       _yearLevel = null;
-      _selectedStudent = null; // Reset the Student object state
+      _selectedStudent = null;
     });
 
     showDialog(
@@ -315,7 +301,6 @@ class _AddIncidentState extends State<AddIncident> {
     );
   }
 
-  // Helper function to create a TextField input
   Widget _input(String label, TextEditingController controller, IconData icon, {bool enabled = true}) {
     return TextField(
       controller: controller,
@@ -330,7 +315,6 @@ class _AddIncidentState extends State<AddIncident> {
     );
   }
 
-  // Helper function to create a Dropdown form field
   Widget _dropdown({required String label, required String? value, required List<String> items, required void Function(String?) onChangedCallback}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -345,7 +329,6 @@ class _AddIncidentState extends State<AddIncident> {
     );
   }
 
-  // Helper function for Date and Time pickers
   Widget _pickerButton({required String label, required IconData icon, required VoidCallback onTap, DateTime? selectedDate, TimeOfDay? selectedTime}) {
     String displayLabel = label;
     Color labelColor = primaryColor;
@@ -381,7 +364,6 @@ class _AddIncidentState extends State<AddIncident> {
     );
   }
 
-  // Helper function to extract unique program names from the student list
   List<String> _getProgramListFromStudents(List<Student> students) {
     final set = <String>{};
     for (var s in students) {
@@ -390,8 +372,7 @@ class _AddIncidentState extends State<AddIncident> {
     final list = set.toList()..sort();
     return list;
   }
-  
-  // The main build method
+ 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -432,35 +413,32 @@ class _AddIncidentState extends State<AddIncident> {
                 ),
                 const SizedBox(height: 24),
 
-                // STUDENT DROPDOWN (Now uses the Student object as the value)
                 studentProv.loading
                     ? const Center(child: CircularProgressIndicator())
                     : Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(12)),
-                        child: DropdownButtonFormField<Student>( // CRITICAL: Use Student model as the value type
+                        child: DropdownButtonFormField<Student>( 
                           value: _selectedStudent,
                           isExpanded: true,
                           decoration: const InputDecoration(labelText: 'Select Student', border: InputBorder.none),
                           items: studentProv.students
                               .map((s) => DropdownMenuItem<Student>(
-                                          value: s, // CRITICAL: Use the Student object as the value
+                                          value: s, 
                                           child: Text('${s.fullName} — ${s.studentId}', overflow: TextOverflow.ellipsis),
                                         ))
                               .toList(),
-                          onChanged: _onStudentSelected, // Call the updated handler
+                          onChanged: _onStudentSelected, 
                         ),
                       ),
 
                 const SizedBox(height: 16),
 
-                // Student details (auto-filled fields)
                 _input("Student ID Number", _studentId, Icons.badge, enabled: false),
                 const SizedBox(height: 16),
                 _input("Full Name", _fullName, Icons.person, enabled: false),
                 const SizedBox(height: 16),
 
-                // Program (dropdown) - Now manually editable but pre-filled
                 _dropdown(
                   label: "Program",
                   value: _program,
@@ -469,7 +447,6 @@ class _AddIncidentState extends State<AddIncident> {
                 ),
                 const SizedBox(height: 16),
 
-                // Year Level (dropdown)
                 _dropdown(
                   label: "Year Level",
                   value: _yearLevel,
@@ -481,7 +458,6 @@ class _AddIncidentState extends State<AddIncident> {
                 _input("Section", _section, Icons.group),
                 const SizedBox(height: 16),
 
-                // Date Picker
                 _pickerButton(
                   label: "Select Date of Incident",
                   icon: Icons.date_range,
@@ -497,8 +473,7 @@ class _AddIncidentState extends State<AddIncident> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
-                // Time Picker
+
                 _pickerButton(
                   label: "Select Time of Incident",
                   icon: Icons.access_time,
@@ -513,7 +488,6 @@ class _AddIncidentState extends State<AddIncident> {
                 _input("Location of Incident", _location, Icons.place),
                 const SizedBox(height: 16),
 
-                // Offense Type Dropdown
                 _dropdown(
                   label: "Offense Type (Category)",
                   value: _offenseType,
@@ -527,7 +501,6 @@ class _AddIncidentState extends State<AddIncident> {
                 ),
                 const SizedBox(height: 16),
 
-                // Specific Offense Dropdown (Conditional)
                 if (_offenseType != null) ...[
                   _dropdown(
                     label: "Specific Offense",
@@ -538,7 +511,6 @@ class _AddIncidentState extends State<AddIncident> {
                   const SizedBox(height: 16),
                 ],
 
-                // Description Text Field
                 TextField(
                   controller: _description,
                   maxLines: 4,
@@ -552,7 +524,6 @@ class _AddIncidentState extends State<AddIncident> {
 
                 const SizedBox(height: 30),
 
-                // Submit Button / Loading Indicator
                 (_loadingLocal || incidentProv.loading)
                     ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primaryColor)))
                     : SizedBox(
@@ -574,7 +545,6 @@ class _AddIncidentState extends State<AddIncident> {
         ),
       ),
 
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         onTap: (index) {

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class DashboardStatsProvider extends ChangeNotifier {
-  // --- Summary Stats ---
   int incidentsThisMonth = 0;
   int incidentsTotal = 0;
   bool isLoadingStats = true;
   String? errorMessageStats;
 
-  // --- Program Stats ---
   Map<String, int> misconductPerProgram = {};
   bool isProgramDataLoading = true;
   String? programErrorMessage;
@@ -17,16 +15,13 @@ class DashboardStatsProvider extends ChangeNotifier {
     fetchAllStats();
   }
 
-  /// Fetches all dashboard statistics: summary + misconduct per program
   Future<void> fetchAllStats() async {
-    // Reset error messages and loading flags
     errorMessageStats = null;
     programErrorMessage = null;
     isLoadingStats = true;
     isProgramDataLoading = true;
     notifyListeners();
 
-    // --- 1. Summary Stats ---
     try {
       final stats = await ApiService.fetchIncidentStats();
       final now = DateTime.now();
@@ -53,7 +48,6 @@ class DashboardStatsProvider extends ChangeNotifier {
       isLoadingStats = false;
     }
 
-    // --- 2. Misconduct Per Program ---
     try {
       final data = await ApiService.fetchMisconductPerProgram();
       misconductPerProgram = data;
@@ -63,7 +57,6 @@ class DashboardStatsProvider extends ChangeNotifier {
       isProgramDataLoading = false;
     }
 
-    // Notify listeners once both fetches are done
     notifyListeners();
   }
 }

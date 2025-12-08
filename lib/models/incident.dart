@@ -1,23 +1,20 @@
-// lib/models/incident.dart
-
 class Incident {
   final int? incidentId;
   final String studentId;
   final String fullName;
-  final String program; // Display Name
+  final String program; 
   final String yearLevel;
   final String section;
   final String dateOfIncident; 
   final String timeOfIncident; 
   final String location;
   
-  // Foreign Key IDs (used when READING/UPDATING)
   final int? categoryId; 
   final int? specificOffenseId;
-  final int? programId; // Foreign key ID for program
+  final int? programId; 
 
-  final String offenseCategory; // Display Name (e.g., 'Minor Offense')
-  final String specificOffense; // Display Name (e.g., 'Littering')
+  final String offenseCategory;
+  final String specificOffense; 
   final String description;
   final String status;
   final String? recommendation;
@@ -92,7 +89,6 @@ class Incident {
     };
   }
   
-  // 🚀 CRITICAL FIX: Implement copyWith method
   Incident copyWith({
     int? incidentId,
     String? studentId,

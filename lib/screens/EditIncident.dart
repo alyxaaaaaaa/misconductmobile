@@ -11,7 +11,7 @@ class EditIncidentScreen extends StatefulWidget {
 
   const EditIncidentScreen({super.key, required this.incidentToEdit});
 
-  static const primaryColor = Color(0xFF2E7D32);
+  static const primaryColor = Color(0xFF84BE78);
   static const Color lightGreenBackground = Color(0xFFE8F5E9);
 
   @override
@@ -37,8 +37,7 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
   late String? _specificOffense;
   late String? _status;
   
-  // 🎯 NEW: For Role-Based Access Control (RBAC)
-  late String _userRole = 'user'; // Default role
+  late String _userRole = 'user'; 
   bool get _isAdmin => _userRole == 'admin';
 
   late DateTime? _incidentDate;
@@ -64,7 +63,7 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
 
   static const List<String> _statusOptions = ['Pending', 'Approved', 'Resolved', 'Rejected', 'Under Review', 'Closed'];
 
-  // Renamed to Placeholder to reflect server's progressive logic
+
   String _getRecommendationPlaceholder(String? offenseType) {
     if (offenseType == "Minor Offense") {
       return "Issuance of a formal warning letter to the student and notification to the parent/guardian. Consider mandatory counseling or a brief disciplinary action (e.g., community service) for repeat offenses.";
@@ -86,7 +85,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
     _locationController = TextEditingController(text: incident.location);
     _descriptionController = TextEditingController(text: incident.description);
     
-    // Use the stored recommendation, defaulting to empty if null/not set
     _recommendationController = TextEditingController(
       text: incident.recommendation ?? '', 
     );
@@ -110,7 +108,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
     }
   }
 
-  // 🎯 Fetch user role from Provider
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -118,7 +115,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       _userRole = userProvider.role ?? 'user';
     } catch (e) {
-      // Fallback: This runs if UserProvider is not correctly set up
       debugPrint('Warning: Could not access UserProvider for RBAC. Defaulting to user role.');
       _userRole = 'user';
     }
@@ -147,7 +143,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       return;
     }
     
-    // 🎯 Client-Side Date/Time Validation (Mirroring PHP Logic)
     if (_incidentDate == null || _incidentTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Date and Time of incident are required.'), backgroundColor: Colors.red),
@@ -155,7 +150,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       return;
     }
 
-    // No Sundays check
     if (_incidentDate!.weekday == DateTime.sunday) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('The date of incident cannot be a Sunday.'), backgroundColor: Colors.red),
@@ -163,7 +157,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       return;
     }
 
-    // Time between 7:00 AM and 5:00 PM check
     final hour = _incidentTime!.hour;
     if (hour < 7 || hour > 17) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,8 +164,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       );
       return;
     }
-    // -----------------------------------------------------------
-
 
     setState(() {
       _isSaving = true;
@@ -199,11 +190,9 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
     );
 
     try {
-      // 1. Update the incident data (IncidentProvider calls loadIncidents() and notifyListeners())
       await Provider.of<IncidentProvider>(context, listen: false)
           .updateIncident(updatedIncident);
           
-      // 2. 🔑 CRITICAL FIX: After the raw incident list is updated, force the stats dashboard to refresh its data.
       await Provider.of<DashboardStatsProvider>(context, listen: false)
           .fetchAllStats();
 
@@ -216,7 +205,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
         ),
       );
 
-      // Pass the updated incident back to the detail screen
       Navigator.pop(context, updatedIncident); 
     } catch (e) {
       if (!mounted) return;
@@ -235,12 +223,8 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🎯 SOFT DELETE IMPLEMENTATION 
-  // -------------------------------------------------------------
   Future<void> _deleteIncident() async {
     if (!_isAdmin) {
-      // Provide feedback if a non-admin somehow bypasses the button visibility
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permission Denied. Only Admins can delete.'), backgroundColor: Colors.red),
       );
@@ -255,11 +239,8 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);
       final dashboardStatsProvider = Provider.of<DashboardStatsProvider>(context, listen: false);
 
-      // 1. Perform the soft delete operation, passing the full incident object
-      // The provider will set the status to 'Deleted' and call the update API.
       await incidentProvider.deleteIncident(widget.incidentToEdit);
 
-      // 2. Force the stats dashboard to refresh its data.
       await dashboardStatsProvider.fetchAllStats();
 
       if (!mounted) return;
@@ -271,7 +252,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
         ),
       );
 
-      // Navigate back to the main list screen after successful deletion
       Navigator.popUntil(context, (route) => route.isFirst); 
     } catch (e) {
       if (!mounted) return;
@@ -315,7 +295,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       await _deleteIncident();
     }
   }
-  // -------------------------------------------------------------
 
   Widget _input(String label, TextEditingController controller, IconData icon,
       {bool enabled = true, int maxLines = 1}) {
@@ -375,7 +354,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                 color: EditIncidentScreen.primaryColor),
             prefixIconConstraints: const BoxConstraints(minWidth: 40),
           ),
-          // 🎯 FIX: Check for duplicate or empty item list. Added .toSet().toList() for safety.
           items: items.toSet().toList()
               .map((e) => DropdownMenuItem(
                     value: e,
@@ -447,7 +425,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
         title: const Text('Edit Incident Details'),
         backgroundColor: EditIncidentScreen.primaryColor,
         foregroundColor: Colors.white,
-        // 🎯 NEW: Add Admin-only Soft Delete Button
         actions: [
           if (_isAdmin)
             IconButton(
@@ -549,7 +526,6 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                         if (_offenseList[val] != null && !_offenseList[val]!.contains(_specificOffense)) {
                           _specificOffense = null;
                         }
-                        // Update recommendation placeholder
                         _recommendationController.text = _getRecommendationPlaceholder(val); 
                       });
                     },
@@ -564,20 +540,19 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                   _input("Description", _descriptionController, Icons.description, maxLines: 4),
 
                   const Divider(height: 30),
-                  const Text('Administrative Notes (Admin Only)', // Added Admin Only
+                  const Text('Administrative Notes (Admin Only)', 
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                  // 🎯 RBAC: Admin-restricted fields
                   _dropdown(
                     label: "Current Status",
                     value: _status,
                     items: _statusOptions,
                     onChangedCallback: (val) => setState(() => _status = val),
-                    enabled: _isAdmin, // Only Admin can change status
+                    enabled: _isAdmin, 
                   ),
                   _input("Recommendation/Sanction", _recommendationController, Icons.computer,
-                      maxLines: 3, enabled: _isAdmin), // Only Admin can change recommendation
+                      maxLines: 3, enabled: _isAdmin), 
                   _input("Final Action Taken", _actionTakenController, Icons.gavel,
-                      maxLines: 3, enabled: _isAdmin), // Only Admin can change final action
+                      maxLines: 3, enabled: _isAdmin),
 
                   const SizedBox(height: 30),
                   SizedBox(
