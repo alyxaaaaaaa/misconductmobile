@@ -64,15 +64,13 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        // IMAGE BACKGROUND
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/BG.png'),
-            fit: BoxFit.fill,           // covers screen, keeps aspect
+            fit: BoxFit.fill,           
           ),
         ),
         child: Container(
-          // optional green overlay to keep text readable
           color: Colors.black.withOpacity(0.2),
           child: Center(
             child: SingleChildScrollView(

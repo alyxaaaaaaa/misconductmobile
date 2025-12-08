@@ -5,12 +5,11 @@ import 'package:intl/intl.dart';
 // Assuming these paths are correct relative to this file
 import '../providers/student_provider.dart';
 import '../providers/incident_provider.dart';
-import '../providers/dashboard_stats_provider.dart'; // REQUIRED FOR REFRESH
+import '../providers/dashboard_stats_provider.dart'; 
 import '../models/student.dart';
 import '../models/incident.dart';
-import 'IncidentsDetails.dart'; // Ensure this file and class exists
+import 'IncidentsDetails.dart'; 
 
-// This widget is assumed to be in screens/AddIncident.dart
 class AddIncident extends StatefulWidget {
   const AddIncident({super.key});
 
@@ -19,6 +18,10 @@ class AddIncident extends StatefulWidget {
 }
 
 class _AddIncidentState extends State<AddIncident> {
+  // CRITICAL: Hold the Student object directly.
+  Student? _selectedStudent; 
+  
+  // Text controllers are only for display (enabled: false) or manual input
   final _studentId = TextEditingController();
   final _fullName = TextEditingController();
   final _section = TextEditingController();
@@ -35,52 +38,32 @@ class _AddIncidentState extends State<AddIncident> {
 
   bool _loadingLocal = false;
 
-  static const primaryColor = Color(0xFF2E7D32); // Dark green
-  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
-  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
-  // =============================================================
+  static const primaryColor = Color(0xFF2E7D32); 
+  static const Color lightGreenBackground = Color(0xFFE8F5E9); 
   final DateFormat _dateFormatter = DateFormat('MMM dd, yyyy');
 
-  // Offense lists
+  // Offense lists (Remain as static data)
   static const Map<String, List<String>> _offenseList = {
     "Minor Offense": [
       "Failure to wear uniform",
-      "Pornographic materials",
-      "Littering",
-      "Loitering",
-      "Eating in restricted areas",
-      "Unauthorized use of school facilities",
-      "Lending/borrowing ID",
-      "Driving violations",
+      "Pornographic materials", "Littering", "Loitering",
+      "Eating in restricted areas", "Unauthorized use of school facilities",
+      "Lending/borrowing ID", "Driving violations",
     ],
     "Major Offense": [
-      "Alcohol/drugs/weapons",
-      "Smoking",
-      "Disrespect",
-      "Vandalism",
-      "Cheating/forgery",
-      "Barricades/obstructions",
-      "Physical/verbal assault",
-      "Hazing",
-      "Harassment/sexual abuse",
-      "Unauthorized software/gadgets",
-      "Unrecognized fraternity/sorority",
-      "Gambling",
-      "Public indecency",
-      "Offensive/subversive materials",
-      "Grave threats",
-      "Inciting fight/sedition",
-      "Unauthorized activity",
-      "Bullying",
+      "Alcohol/drugs/weapons", "Smoking", "Disrespect", "Vandalism",
+      "Cheating/forgery", "Barricades/obstructions", "Physical/verbal assault",
+      "Hazing", "Harassment/sexual abuse", "Unauthorized software/gadgets",
+      "Unrecognized fraternity/sorority", "Gambling", "Public indecency",
+      "Offensive/subversive materials", "Grave threats", "Inciting fight/sedition",
+      "Unauthorized activity", "Bullying",
     ],
   };
 
-  Student? _selectedStudent;
 
   @override
   void initState() {
     super.initState();
-    // Ensures the context is available to fetch initial data for the dropdown
     Future.microtask(() {
       Provider.of<StudentProvider>(context, listen: false).fetchStudentsForDropdown();
     });
@@ -98,14 +81,19 @@ class _AddIncidentState extends State<AddIncident> {
 
   void _onStudentSelected(Student? s) {
     setState(() {
-      _selectedStudent = s;
+      _selectedStudent = s; 
+
       if (s != null) {
-        _studentId.text = s.studentId;
+        // Use student.studentId (the student number string) for display
+        _studentId.text = s.studentId; 
         _fullName.text = s.fullName;
-        _program = s.program;
-        _yearLevel = s.yearLevel;
+        
+        // Use properties from the selected object for autofill
+        _program = s.program_code;
+        _yearLevel = s.year_level;
         _section.text = s.section;
       } else {
+        // Clear all fields if selection is null
         _studentId.clear();
         _fullName.clear();
         _program = null;
@@ -117,14 +105,18 @@ class _AddIncidentState extends State<AddIncident> {
 
   String _formatBackendErrors(Map<String, dynamic> errors) {
     String errorMessage = 'Please correct the following issues:\n';
+    
+    // Check for general student ID errors first
     if (errors.containsKey('studentId') && errors['studentId'] is List && errors['studentId'].isNotEmpty) {
-      if (errors['studentId'][0].toString().contains('invalid')) {
+      if (errors['studentId'][0].toString().contains('invalid') || errors['studentId'][0].toString().contains('exist')) {
         errorMessage += '• Student Record Not Found: The Student ID Number is not registered.\n';
       } else {
         errorMessage += '• ${errors['studentId'][0]}\n';
       }
       errors.remove('studentId');
     }
+    
+    // Iterate through other errors
     errors.forEach((key, value) {
       if (value is List && value.isNotEmpty) {
         final formattedKey = key.replaceAllMapped(RegExp(r'([A-Z])'), (match) => ' ${match.group(1)}')
@@ -137,23 +129,47 @@ class _AddIncidentState extends State<AddIncident> {
   }
 
   Future<void> _submit() async {
+    // 🔑 CONSOLIDATED VALIDATION FIX: Check all fields that Laravel requires
     if (_incidentDate == null ||
         _incidentTime == null ||
-        _offenseType == null ||
-        _specificOffense == null ||
-        _studentId.text.isEmpty ||
-        _fullName.text.isEmpty ||
-        _program == null ||
-        _yearLevel == null) {
+        _offenseType == null ||      // Required by Laravel
+        _specificOffense == null ||  // Required by Laravel
+        _selectedStudent == null || 
+        _location.text.isEmpty ||
+        _description.text.isEmpty) { // Assuming Description is also required
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill out all required fields."), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    // Get providers using listen: false
-    final incidentProvider = Provider.of<IncidentProvider>(context, listen: false);  
-    final dashboardProvider = Provider.of<DashboardStatsProvider>(context, listen: false); // GET DASHBOARD PROVIDER
+    // Helper map for converting string names to mock integer IDs required by the backend
+    final offenseIdMap = {
+        'Minor Offense': 1, 'Major Offense': 2, 
+        'Failure to wear uniform': 1, 'Pornographic materials': 2, 'Littering': 3, 'Loitering': 4,
+        'Eating in restricted areas': 5, 'Unauthorized use of school facilities': 6, 
+        'Lending/borrowing ID': 7, 'Driving violations': 8, 'Alcohol/drugs/weapons': 9, 'Smoking': 10,
+        'Disrespect': 11, 'Vandalism': 12, 'Cheating/forgery': 13, 'Barricades/obstructions': 14,
+        'Physical/verbal assault': 15, 'Hazing': 16, 'Harassment/sexual abuse': 17, 
+        'Unauthorized software/gadgets': 18, 'Unrecognized fraternity/sorority': 19, 'Gambling': 20,
+        'Public indecency': 21, 'Offensive/subversive materials': 22, 'Grave threats': 23, 
+        'Inciting fight/sedition': 24, 'Unauthorized activity': 25, 'Bullying': 26, 
+    };
+
+    final categoryId = offenseIdMap[_offenseType] ?? 0;
+    final specificOffenseId = offenseIdMap[_specificOffense] ?? 0;
+    
+    if (categoryId == 0 || specificOffenseId == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error mapping offense types to IDs. Check offense selection."), backgroundColor: Colors.red),
+        );
+        return;
+    }
+
+
+    final incidentProvider = Provider.of<IncidentProvider>(context, listen: false); 	
+    final dashboardProvider = Provider.of<DashboardStatsProvider>(context, listen: false); 
 
     setState(() => _loadingLocal = true);
 
@@ -162,17 +178,18 @@ class _AddIncidentState extends State<AddIncident> {
 
     final formattedTime = DateFormat('HH:mm').format(incidentDateTime);
 
+    // CRITICAL: Build the payload using the unique student number and valid fields
     final incident = Incident(
-      studentId: _studentId.text,
-      fullName: _fullName.text,
-      program: _program ?? '',
+      studentId: _selectedStudent!.studentId, 
+      fullName: _selectedStudent!.fullName,
+      program: _program ?? '', 
       yearLevel: _yearLevel ?? '',
       section: _section.text,
       dateOfIncident: _incidentDate!.toIso8601String().split('T').first,
-      timeOfIncident: formattedTime,
+      timeOfIncident: formattedTime, // Now guaranteed to be non-null and formatted
       location: _location.text,
-      offenseCategory: _offenseType ?? '',
-      specificOffense: _specificOffense ?? '',
+      offenseCategory: _offenseType ?? '', // Now guaranteed non-null
+      specificOffense: _specificOffense ?? '', // Now guaranteed non-null
       description: _description.text,
       status: 'Pending',
       recommendation: null,
@@ -182,7 +199,6 @@ class _AddIncidentState extends State<AddIncident> {
     try {
       final response = await incidentProvider.createIncident(incident);
       
-      // *** FIX: CALL DASHBOARD REFRESH ***
       await dashboardProvider.fetchAllStats(); 
 
       setState(() => _loadingLocal = false);
@@ -203,13 +219,15 @@ class _AddIncidentState extends State<AddIncident> {
           ) : {};
           if (response.containsKey('errors')) {
             final errorMessages = _formatBackendErrors(Map<String, dynamic>.from(response['errors']));
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: SelectableText(errorMessages, style: const TextStyle(color: Colors.white)),
-                backgroundColor: Colors.red.shade700,
-                duration: const Duration(seconds: 7),
-              ),
-            );
+            if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: SelectableText(errorMessages, style: const TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.red.shade700,
+                    duration: const Duration(seconds: 7),
+                  ),
+                );
+            }
             return;
           }
         } catch (_) {
@@ -217,9 +235,11 @@ class _AddIncidentState extends State<AddIncident> {
         }
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to submit incident: ${e.toString()}"), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to submit incident: ${e.toString()}"), backgroundColor: Colors.red),
+          );
+      }
     }
   }
 
@@ -237,7 +257,7 @@ class _AddIncidentState extends State<AddIncident> {
       _specificOffense = null;
       _program = null;
       _yearLevel = null;
-      _selectedStudent = null;
+      _selectedStudent = null; // Reset the Student object state
     });
 
     showDialog(
@@ -283,7 +303,6 @@ class _AddIncidentState extends State<AddIncident> {
                 child: const Text('View Report Details', style: TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  // Pushes to the details screen
                   Navigator.push( 
                     context,
                     MaterialPageRoute(builder: (_) => IncidentDetailScreen(incident: filedIncident)),
@@ -366,9 +385,8 @@ class _AddIncidentState extends State<AddIncident> {
   List<String> _getProgramListFromStudents(List<Student> students) {
     final set = <String>{};
     for (var s in students) {
-      if (s.program.isNotEmpty) set.add(s.program);
+      if (s.program_code.isNotEmpty) set.add(s.program_code);
     }
-    // return in predictable order
     final list = set.toList()..sort();
     return list;
   }
@@ -377,16 +395,13 @@ class _AddIncidentState extends State<AddIncident> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    // listen: true is used here since we need the UI to rebuild when loading/students change
     final studentProv = Provider.of<StudentProvider>(context);
     final incidentProv = Provider.of<IncidentProvider>(context);
 
     final specificOffenses = _offenseType != null ? _offenseList[_offenseType] ?? [] : <String>[];
 
     return Scaffold(
-      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
       backgroundColor: lightGreenBackground,
-      // ========================================================================
       appBar: AppBar(
         title: const Text("Add Incident"),
         backgroundColor: primaryColor,
@@ -417,23 +432,23 @@ class _AddIncidentState extends State<AddIncident> {
                 ),
                 const SizedBox(height: 24),
 
-                // STUDENT DROPDOWN (Conditional based on studentProv.loading)
+                // STUDENT DROPDOWN (Now uses the Student object as the value)
                 studentProv.loading
                     ? const Center(child: CircularProgressIndicator())
                     : Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(12)),
-                        child: DropdownButtonFormField<Student>(
+                        child: DropdownButtonFormField<Student>( // CRITICAL: Use Student model as the value type
                           value: _selectedStudent,
                           isExpanded: true,
                           decoration: const InputDecoration(labelText: 'Select Student', border: InputBorder.none),
                           items: studentProv.students
                               .map((s) => DropdownMenuItem<Student>(
-                                          value: s,
+                                          value: s, // CRITICAL: Use the Student object as the value
                                           child: Text('${s.fullName} — ${s.studentId}', overflow: TextOverflow.ellipsis),
                                         ))
                               .toList(),
-                          onChanged: _onStudentSelected,
+                          onChanged: _onStudentSelected, // Call the updated handler
                         ),
                       ),
 
@@ -445,7 +460,7 @@ class _AddIncidentState extends State<AddIncident> {
                 _input("Full Name", _fullName, Icons.person, enabled: false),
                 const SizedBox(height: 16),
 
-                // Program (dropdown)
+                // Program (dropdown) - Now manually editable but pre-filled
                 _dropdown(
                   label: "Program",
                   value: _program,
@@ -563,8 +578,7 @@ class _AddIncidentState extends State<AddIncident> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         onTap: (index) {
-          // This navigation logic assumes the other screens are available in the navigator stack
-          if (index != 2) Navigator.pop(context);  
+          if (index != 2) Navigator.pop(context); 	
         },
         backgroundColor: Colors.white,
         selectedItemColor: primaryColor,

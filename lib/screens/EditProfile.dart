@@ -91,11 +91,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    // REMOVED: getProfileImageProvider function is no longer needed
-    // REMOVED: isImageSet bool is no longer needed
-
     return Scaffold(
-      backgroundColor: lightGreenBackground, // APPLYING lightGreenBackground
+      backgroundColor: lightGreenBackground, 
       appBar: AppBar(
         title: const Text("Edit Profile"),
         backgroundColor: primaryColor,
@@ -120,12 +117,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // === MODIFICATION 2: PROFILE PHOTO WIDGET MODIFIED ===
-                    // Kept the circle avatar but removed the GestureDetector and image logic
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: primaryColor.withOpacity(0.1),
-                      // Only display the network image if a path exists
                       backgroundImage: widget.initialUser.profilePicturePath.isNotEmpty
                           ? NetworkImage(widget.initialUser.profilePicturePath)
                           : null,
@@ -133,7 +127,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ? const Icon(Icons.person, size: 60, color: primaryColor)
                           : null,
                     ),
-                    // ====================================================
                     const SizedBox(height: 20),
                     
                     TextFormField(

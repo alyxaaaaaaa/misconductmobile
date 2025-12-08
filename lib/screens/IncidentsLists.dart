@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import '../providers/incident_provider.dart'; 
+import '../providers/dashboard_stats_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:misconductmobile/screens/IncidentsDetails.dart'; 
 
@@ -12,10 +13,8 @@ class IncidentsList extends StatefulWidget {
 }
 
 class IncidentsListState extends State<IncidentsList> {
-  static const primaryColor = Color(0xFF2E7D32); // Dark green
-  // === MODIFICATION 1: DEFINING THE lightGreenBackground COLOR ===
-  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
-  // =============================================================
+  static const primaryColor = Color(0xFF2E7D32); 
+  static const Color lightGreenBackground = Color(0xFFE8F5E9);
 
   @override
   void initState() {
@@ -25,52 +24,42 @@ class IncidentsListState extends State<IncidentsList> {
     );
   }
 
-  void refreshIncidents() {
-    Provider.of<IncidentProvider>(context, listen: false).loadIncidents();
+  // Remove seconds (HH:MM:SS → HH:MM)
+  String _formatTime(String timeString) {
+    if (timeString.contains(":")) {
+      final parts = timeString.split(':');
+      if (parts.length >= 2) {
+        return "${parts[0]}:${parts[1]}";
+      }
+    }
+    return timeString;
   }
 
   Widget _buildStatusChip(String status) {
     Color chipColor;
-    Color textColor = Colors.white;
-
     switch (status.toLowerCase()) {
-      case 'pending':
-        chipColor = Colors.orange;
-        break;
-      case 'approved':
-        chipColor = primaryColor;
-        break;
-      case 'rejected':
-        chipColor = Colors.red;
-        break;
-      default:
-        chipColor = Colors.grey;
+      case 'pending': chipColor = Colors.orange; break;
+      case 'approved': chipColor = primaryColor; break;
+      case 'rejected': chipColor = Colors.red; break;
+      default: chipColor = Colors.grey;
     }
 
     return Chip(
       label: Text(
         status.toUpperCase(),
-        style: TextStyle(
-          color: textColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 10,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 10),
       ),
       backgroundColor: chipColor,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final incidentProvider = Provider.of<IncidentProvider>(context);
-    final incidents = incidentProvider.incidents;
-    final isLoading = incidentProvider.isLoading;
+    final provider = Provider.of<IncidentProvider>(context);
+    final incidents = provider.incidents;
 
     return Scaffold(
-      // === MODIFICATION 2: APPLYING lightGreenBackground TO THE SCAFFOLD BODY ===
       backgroundColor: lightGreenBackground,
-      // ========================================================================
       appBar: AppBar(
         title: const Text("Incidents List"),
         backgroundColor: primaryColor,
@@ -78,83 +67,62 @@ class IncidentsListState extends State<IncidentsList> {
       ),
 
       body: RefreshIndicator(
-        onRefresh: incidentProvider.loadIncidents, 
+        onRefresh: provider.loadIncidents, 
         color: primaryColor,
-        child: Container(
-          padding: const EdgeInsets.only(top: 8.0),
+        child: provider.isLoading
+            ? const Center(child: CircularProgressIndicator(color: primaryColor))
+            : (incidents.isEmpty
+                ? const Center(
+                    child: Text("No incidents found.", style: TextStyle(fontSize: 18, color: Colors.grey))
+                  )
+                : ListView.builder(
+                    itemCount: incidents.length,
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemBuilder: (context, index) {
+                      final incident = incidents[index];
+                      final date = DateTime.tryParse(incident.dateOfIncident);
+                      final formattedDate = date != null
+                          ? DateFormat('MMM dd, yyyy').format(date)
+                          : 'N/A';
 
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator(color: primaryColor))
-              : (incidents.isEmpty 
-                  ? const Center(
-                      child: SingleChildScrollView(
-                        physics: AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.info_outline, size: 40, color: Colors.grey),
-                            SizedBox(height: 10),
-                            Text(
-                              'No incidents have been filed yet.',
-                              style: TextStyle(color: Colors.grey, fontSize: 18),
-                            ),
-                            SizedBox(height: 100),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: incidents.length,
-                      padding: const EdgeInsets.only(bottom: 80), 
-                      itemBuilder: (context, index) {
-                        final incident = incidents[index];
-                        final date = DateTime.tryParse(incident.dateOfIncident);
-                        final formattedDate = date != null ? DateFormat('MMM dd, yyyy').format(date) : 'N/A';
+                      final formattedTime = _formatTime(incident.timeOfIncident);
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(12),
-                            leading: CircleAvatar(
-                              backgroundColor: primaryColor.withOpacity(0.1),
-                              child: const Icon(Icons.warning_amber_rounded, color: primaryColor),
-                            ),
-                            title: Text(
-                              incident.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  incident.specificOffense,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
-                                ),
-                                const SizedBox(height: 2),
-                                Text('${incident.offenseCategory}'),
-                                Text('Date: $formattedDate at ${incident.timeOfIncident}'),
-                              ],
-                            ),
-                            trailing: _buildStatusChip(incident.status),
-
-                            onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => IncidentDetailScreen(incident: incident),
-                                    ),
-                                );
-                            },
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        elevation: 3,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: primaryColor.withOpacity(0.1),
+                            child: const Icon(Icons.warning_amber_rounded, color: primaryColor),
                           ),
-                        );
-                      },
-                    )
-              ),
-            ),
-          ),
-        );
-      }
-    }
+                          title: Text(
+                            incident.fullName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text("${incident.specificOffense}\nDate: $formattedDate at $formattedTime"),
+                          trailing: _buildStatusChip(incident.status),
+
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => IncidentDetailScreen(incident: incident),
+                              ),
+                            );
+
+                            if (result == true) {
+                              // Refresh incident list
+                              await Provider.of<IncidentProvider>(context, listen: false).loadIncidents();
+
+                              // Refresh dashboard stats
+                              await Provider.of<DashboardStatsProvider>(context, listen: false).fetchAllStats();
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  )),
+      ),
+    );
+  }
+}

@@ -25,8 +25,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isConfirmPasswordObscure = true;
 
   static const primaryColor = Color(0xFF2E7D32);
-
-  // Define the set of allowed special characters for clarity
   static const String allowedSpecialCharacters = r'!@#$%^&*()_+=-`~?/<>,.:;[]{}|';
 
   @override
@@ -38,7 +36,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  // === UPDATED FUNCTION: PASSWORD VALIDATION LOGIC with Special Character ===
   Map<String, bool> _getPasswordValidation(String password) {
     if (password.isEmpty) {
       return {
@@ -46,12 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'uppercase': false,
         'lowercase': false,
         'number': false,
-        'special_char': false, // NEW RULE
+        'special_char': false, 
         'no_spaces': false,
       };
     }
 
-    // Regex to check for at least one special character from the allowed list
     final specialCharRegExp = RegExp(r'[' + RegExp.escape(allowedSpecialCharacters) + r']');
 
     return {
@@ -59,12 +55,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'uppercase': password.contains(RegExp(r'[A-Z]')),
       'lowercase': password.contains(RegExp(r'[a-z]')),
       'number': password.contains(RegExp(r'[0-9]')),
-      'special_char': password.contains(specialCharRegExp), // CHECK FOR SPECIAL CHAR
+      'special_char': password.contains(specialCharRegExp), 
       'no_spaces': !password.contains(' '),
     };
   }
 
-  // Validates the password against all criteria and returns an error string if needed
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return "Password is required";
@@ -72,7 +67,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final validation = _getPasswordValidation(value);
     
-    // Check if all rules are satisfied
     final allValid = validation.values.every((isValid) => isValid);
 
     if (!allValid) {
@@ -190,7 +184,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // === UPDATED WIDGET: PASSWORD VERIFICATION CHECKLIST ===
   Widget _buildPasswordChecklist(String password) {
     final validation = _getPasswordValidation(password);
 
@@ -215,12 +208,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'At least one number (0 to 9)',
             validation['number']!,
           ),
-          // NEW CHECKLIST ITEM
           _buildChecklistItem(
             'At least one special character (e.g., !@#\$...)',
             validation['special_char']!,
           ),
-          // END NEW CHECKLIST ITEM
           _buildChecklistItem(
             'No spaces',
             validation['no_spaces']!,

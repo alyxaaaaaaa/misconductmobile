@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:misconductmobile/providers/dashboard_stats_provider.dart';
+import 'package:misconductmobile/providers/user_provider.dart'; 
 import 'dart:math';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   static const Color primaryColor = Color(0xFF2E7D32); // Dark green
-  static const Color lightGreenBackground = Color(0xFFE8F5E9); // Light green background
-  static const Color mediumGreen = Color(0xFF66BB6A); // Medium green for bars/icons
-  static const Color cardShadowGreen = Color(0xFF81C784); // Green shadow for cards
+  static const Color lightGreenBackground = Color(0xFFE8F5E9);
+  static const Color mediumGreen = Color(0xFF66BB6A);
+  static const Color cardShadowGreen = Color(0xFF81C784);
 
-  double _calculateMaxTextWidth(List<String> labels, TextStyle style, BuildContext context) {
+  double _calculateMaxTextWidth(
+      List<String> labels, TextStyle style, BuildContext context) {
     double maxWidth = 0;
     final TextPainter textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -20,7 +22,10 @@ class DashboardPage extends StatelessWidget {
 
     for (var label in labels) {
       textPainter.text = TextSpan(text: label, style: style);
-      textPainter.layout(minWidth: 0, maxWidth: MediaQuery.of(context).size.width);
+      textPainter.layout(
+        minWidth: 0,
+        maxWidth: MediaQuery.of(context).size.width,
+      );
       if (textPainter.width > maxWidth) {
         maxWidth = textPainter.width;
       }
@@ -30,49 +35,55 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    // Assumes UserProvider has a 'name' property
+    final userName = userProvider.name ?? 'User'; 
+
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/images/SMRMS LOGO.png'),
               fit: BoxFit.cover,
             ),
           ),
         ),
-        // title: const Text('Dashboard'),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.refresh),
-        //     onPressed: () {
-        //       Provider.of<DashboardStatsProvider>(context, listen: false).fetchAllStats();
-        //     },
-        //   ),
-        // ],
       ),
       backgroundColor: lightGreenBackground,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: RefreshIndicator(
-          onRefresh: () => Provider.of<DashboardStatsProvider>(context, listen: false).fetchAllStats(),
+          onRefresh: () =>
+              Provider.of<DashboardStatsProvider>(context, listen: false)
+                  .fetchAllStats(),
           color: primaryColor,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Welcome to the Application Dashboard',
+                'Welcome, $userName!',
                 style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: primaryColor,
                 ),
               ),
+              const SizedBox(height: 4),
+              const Text(
+                'Review the latest incident statistics',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: primaryColor,
+                ),
+              ),
               const SizedBox(height: 20),
-              Builder(
-                builder: (context) {
-                  final provider = Provider.of<DashboardStatsProvider>(context);
+              // Wrap the stats section in a Consumer to auto-update
+              Consumer<DashboardStatsProvider>(
+                builder: (context, provider, child) {
                   final isLoading = provider.isLoadingStats;
                   final errorMessage = provider.errorMessageStats;
 
@@ -80,9 +91,14 @@ class DashboardPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (isLoading)
-                        Center(child: CircularProgressIndicator(color: primaryColor))
+                        const Center(
+                          child: CircularProgressIndicator(color: primaryColor),
+                        )
                       else if (errorMessage != null)
-                        Text(errorMessage, style: const TextStyle(color: Colors.redAccent))
+                        Text(
+                          errorMessage,
+                          style: const TextStyle(color: Colors.redAccent),
+                        )
                       else
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,8 +128,8 @@ class DashboardPage extends StatelessWidget {
                       const Text(
                         'Misconduct Per Program',
                         style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: primaryColor,
                         ),
                       ),
@@ -122,7 +138,8 @@ class DashboardPage extends StatelessWidget {
                         thickness: 2,
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
@@ -135,7 +152,7 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: _buildProgramChartHorizontal(context, provider),
+                        child: _buildProgramChartHorizontal(provider, context),
                       ),
                     ],
                   );
@@ -148,17 +165,24 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProgramChartHorizontal(BuildContext context, DashboardStatsProvider provider) {
+  // Horizontal program chart wrapped inside a Consumer
+  Widget _buildProgramChartHorizontal(
+      DashboardStatsProvider provider, BuildContext context) {
     final isProgramDataLoading = provider.isProgramDataLoading;
     final programErrorMessage = provider.programErrorMessage;
     final misconductPerProgram = provider.misconductPerProgram;
 
     if (isProgramDataLoading) {
-      return Center(child: CircularProgressIndicator(color: primaryColor));
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     } else if (programErrorMessage != null) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Text(programErrorMessage, style: const TextStyle(color: Colors.redAccent)),
+        child: Text(
+          programErrorMessage,
+          style: const TextStyle(color: Colors.redAccent),
+        ),
       );
     } else if (misconductPerProgram.isEmpty) {
       return const Center(
@@ -172,14 +196,19 @@ class DashboardPage extends StatelessWidget {
         ..sort((a, b) => b.value.compareTo(a.value));
       final maxCount = sortedPrograms.first.value;
 
-      const TextStyle labelStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryColor);
+      const TextStyle labelStyle = TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: primaryColor,
+      );
       const double countLabelWidth = 35.0;
       const double spacing = 10.0;
       const double barHeight = 28.0;
 
       final displayPrograms = sortedPrograms.take(6).toList();
       final displayLabels = displayPrograms.map((e) => e.key).toList();
-      final maxProgramLabelWidth = _calculateMaxTextWidth(displayLabels, labelStyle, context);
+      final maxProgramLabelWidth =
+          _calculateMaxTextWidth(displayLabels, labelStyle, context);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,15 +225,20 @@ class DashboardPage extends StatelessWidget {
                   child: FittedBox(
                     alignment: Alignment.centerLeft,
                     fit: BoxFit.scaleDown,
-                    child: Text(entry.key, style: labelStyle, maxLines: 1),
+                    child: Text(
+                      entry.key,
+                      style: labelStyle,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
-                SizedBox(width: spacing),
+                const SizedBox(width: spacing),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final maxBarAreaWidth = constraints.maxWidth;
-                      final barWidth = max(maxBarAreaWidth * barScaleFactor, 4.0);
+                      final barWidth =
+                          max(maxBarAreaWidth * barScaleFactor, 4.0);
 
                       return Container(
                         alignment: Alignment.centerLeft,
@@ -213,7 +247,10 @@ class DashboardPage extends StatelessWidget {
                           height: barHeight,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [primaryColor.withOpacity(0.9), mediumGreen],
+                              colors: [
+                                primaryColor.withOpacity(0.9),
+                                mediumGreen,
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -224,7 +261,7 @@ class DashboardPage extends StatelessWidget {
                     },
                   ),
                 ),
-                SizedBox(width: spacing),
+                const SizedBox(width: spacing),
                 SizedBox(
                   width: countLabelWidth,
                   child: Text(
@@ -245,7 +282,8 @@ class DashboardPage extends StatelessWidget {
     }
   }
 
-  Widget _buildSummaryCard(BuildContext context, String title, String count, IconData icon, Color color) {
+  Widget _buildSummaryCard(
+      BuildContext context, String title, String count, IconData icon, Color color) {
     return Card(
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -262,9 +300,19 @@ class DashboardPage extends StatelessWidget {
           children: <Widget>[
             Icon(icon, size: 42, color: color),
             const SizedBox(height: 12),
-            Text(count, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: primaryColor)),
+            Text(
+              count,
+              style: const TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(title, style: const TextStyle(fontSize: 18, color: Colors.green)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, color: Colors.green),
+            ),
           ],
         ),
       ),
