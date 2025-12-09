@@ -209,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             validation['number']!,
           ),
           _buildChecklistItem(
-            'At least one special character (e.g., !@#\$...)',
+            'At least one special character (!@#\$)',
             validation['special_char']!,
           ),
           _buildChecklistItem(
