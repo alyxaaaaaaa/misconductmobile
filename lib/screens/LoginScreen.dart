@@ -58,11 +58,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF84BE78);
-    const newBackgroundColor = Color(0xFF84BE78); 
+    const newBackgroundColor = Color(0xFF84BE78);
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: newBackgroundColor, 
+      backgroundColor: newBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             width: width * 0.9,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95), 
+              color: Colors.white.withOpacity(0.95),
               borderRadius: BorderRadius.circular(16),
               boxShadow: const [
                 BoxShadow(
@@ -91,7 +91,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: primaryColor,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
+                const Text(
+                  "MISCONTRACK",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800, 
+                    color: primaryColor,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Providing a Smarter Approach and Secure Reporting you can rely on.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54, 
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 24), 
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
